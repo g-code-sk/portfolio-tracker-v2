@@ -5,6 +5,8 @@ Use this file as the default operating guide for every development session in th
 ## Stack Baseline
 
 - Backend: Laravel API in repository root.
+- Domain modules: `Domain/<Feature>/...` for feature controllers/data/actions (models stay in `app/Models`).
+- Shared services: `app/Services` for reusable cross-domain helpers.
 - Frontend: Vue + Vuetify app in `frontend/`.
 - API route source: `routes/api.php`.
 - App bootstrap and route registration: `bootstrap/app.php`.
@@ -21,29 +23,14 @@ Use this file as the default operating guide for every development session in th
 
 1. Understand request and identify touched layers (backend, frontend, both).
 2. Locate related code paths and data contracts.
-3. Implement with typed contracts first: prefer Spatie Data classes for backend payloads.
-4. Regenerate frontend types from backend Data classes (`composer types:transform`) after API contract changes.
-5. Regenerate IDE helper files when model/service surface changes (`composer ide:generate`).
-6. Run applicable checks (lint, type checks, build when relevant).
-7. Summarize what changed, why, and any follow-up verification needed.
+3. Follow the focused setup guide for the touched layer:
+   - backend rules in `SETUP_BACKEND_LARAVEL.md`
+   - frontend rules in `SETUP_FRONTEND_VUE_VUETIFY.md`
+4. Keep changes minimal, typed, and consistent with existing conventions.
+5. Run applicable checks (lint, type checks, tests/build when relevant).
+6. Summarize what changed, why, and any follow-up verification needed.
 
 ## Cross-Stack Best Practices
-
-### API Contract Discipline
-
-- Treat API payload shape as a versioned contract.
-- Keep naming stable and consistent across backend/frontend.
-- When changing schema, update both producers and consumers in the same session.
-- Capture validation and error semantics consistently.
-- Use Spatie Data classes for both request validation and API responses.
-- Avoid raw objects/associative arrays for request/response contracts.
-
-### Clean Architecture and Ownership
-
-- Controllers/components orchestrate; services/composables hold reusable logic.
-- Avoid duplicate logic across backend and frontend boundaries.
-- Keep modules small and purpose-driven.
-- Prefer explicit dependencies over hidden global coupling.
 
 ### Security and Reliability
 
@@ -79,5 +66,10 @@ npm run build
 
 - Default to concise, maintainable implementations.
 - Keep frontend UX resilient for loading, empty, and error states.
+- In Vue SFC files, keep block order as `<template>` then `<script setup>`.
+- For frontend API calls, use the shared Axios client at `frontend/src/services/axios.ts`.
+- For frontend API typing, prefer generated types from `frontend/src/types/generated.ts` over local duplicated DTO types.
 - Keep backend responses consistent and easy for frontend consumption.
+- Prefer controller class/method injection for shared services over `app(...)` lookups.
+- Prefer named HTTP status constants over numeric literals in backend responses.
 - Document non-obvious decisions in code comments or task summary.
