@@ -17,6 +17,7 @@ class TypeScriptTransformerServiceProvider extends BaseTypeScriptTransformerServ
             ->transformer(AttributedClassTransformer::class)
             ->transformer(EnumTransformer::class)
             ->transformDirectories(app_path('Data'))
+            ->transformDirectories(base_path('Domain'))
             ->writer(new FlatModuleWriter('generated.ts'));
     }
 }
