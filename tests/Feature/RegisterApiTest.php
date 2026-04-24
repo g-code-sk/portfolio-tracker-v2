@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -10,6 +11,13 @@ use Tests\TestCase;
 class RegisterApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutMiddleware(ValidateCsrfToken::class);
+    }
 
     public function test_it_registers_user_and_stores_hashed_password(): void
     {
@@ -31,6 +39,24 @@ class RegisterApiTest extends TestCase
 
         $this->assertNotSame($payload['password'], $user->password);
         $this->assertTrue(Hash::check($payload['password'], $user->password));
+    }
+
+    public function test_it_authenticates_session_when_registering_from_spa(): void
+    {
+        $payload = [
+            'name' => 'Jane Doe',
+            'email' => 'jane-spa@example.com',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+        ];
+
+        $response = $this
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->withHeader('Referer', 'http://localhost:5173/register')
+            ->postJson('/api/register', $payload);
+
+        $response->assertCreated();
+        $this->assertAuthenticated();
     }
 
     public function test_it_requires_unique_email_and_matching_password_confirmation(): void

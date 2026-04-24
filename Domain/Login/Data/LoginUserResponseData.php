@@ -1,17 +1,16 @@
 <?php
 
-namespace Domain\Register\Data;
+namespace Domain\Login\Data;
 
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
-class RegisterUserResponseData extends Data
+class LoginUserResponseData extends Data
 {
     public function __construct(
         public int $id,
         public string $name,
         public string $email,
-    ) {
-    }
+    ) {}
 }
