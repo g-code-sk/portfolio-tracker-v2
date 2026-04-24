@@ -1,5 +1,5 @@
 import { isAxiosError } from 'axios'
-import type { ApiErrorResponse } from '../types/api'
+import type { ApiErrorResponse } from '@/types/api'
 
 export type FieldErrors<TInput extends Record<string, unknown>> = Partial<Record<keyof TInput, string[]>>
 

@@ -113,10 +113,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import axios from '../services/axios'
-import type { TestApiResponseData, TestItemData } from '../types/generated'
+import axios from '@/services/axios'
+import type { TestApiResponseData, TestItemData } from '@/types/generated'
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? window.location.origin : 'http://127.0.0.1:8000')
 
 const loading = ref(false)
 const error = ref('')
