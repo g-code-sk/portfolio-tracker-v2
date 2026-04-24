@@ -1,24 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-
-type TestItem = {
-  id: number
-  name: string
-  price: number
-}
-
-type TestApiResponse = {
-  status: string
-  message: string
-  timestamp: string
-  items: TestItem[]
-}
+import type { TestApiResponseData, TestItemData } from './types/generated'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 
 const loading = ref(false)
 const error = ref('')
-const response = ref<TestApiResponse | null>(null)
+const response = ref<TestApiResponseData | null>(null)
 
 const endpoint = computed(() => `${apiBaseUrl}/api/test-data`)
 const refreshTime = computed(() =>
@@ -37,7 +25,7 @@ const averagePrice = computed(() =>
 const topItem = computed(() => {
   if (!response.value?.items.length) return null
 
-  return response.value.items.reduce((currentTop, item) =>
+  return response.value.items.reduce((currentTop: TestItemData, item: TestItemData) =>
     item.price > currentTop.price ? item : currentTop,
   )
 })
@@ -60,7 +48,7 @@ const fetchTestData = async () => {
       throw new Error(`Request failed with status ${res.status}`)
     }
 
-    response.value = (await res.json()) as TestApiResponse
+    response.value = (await res.json()) as TestApiResponseData
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Unknown error'
   } finally {
