@@ -7,6 +7,28 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Run Locally (Backend + Frontend)
+
+Start the Laravel backend server from the project root:
+
+```bash
+php artisan serve --host=127.0.0.1 --port=8000
+```
+
+Backend runs at `http://127.0.0.1:8000`.
+
+Start the Vue frontend server from the `frontend` folder:
+
+```bash
+cd frontend
+npm install
+npm run dev -- --host 127.0.0.1 --port 5173
+```
+
+Frontend runs at `http://127.0.0.1:5173` (or the next free port, for example `5174`, if `5173` is busy).
+
+The frontend is configured to call the backend API at `http://127.0.0.1:8000` in development.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
