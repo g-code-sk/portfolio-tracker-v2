@@ -3,8 +3,11 @@ import './style.css'
 import App from '@/App.vue'
 import vuetify from '@/plugins/vuetify'
 import router from '@/router'
+import { initializeAuthState } from '@/stores/auth-session'
 import Vue3Toastify, { type ToastContainerOptions } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
+
+void initializeAuthState()
 
 createApp(App)
 	.use(vuetify)

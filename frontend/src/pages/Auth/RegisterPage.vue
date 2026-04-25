@@ -13,12 +13,7 @@
 							<v-form ref="formRef" class="d-flex flex-column ga-3" @submit.prevent="submit">
 								<AppTextField v-model="form.name" label="Name" :error-messages="fieldErrors.name" :rules="rules.name" required />
 								<LoginEmailField v-model="form.email" autocomplete="email" :error-messages="fieldErrors.email" :rules="rules.email" />
-								<LoginPasswordField
-									v-model="form.password"
-									autocomplete="new-password"
-									:error-messages="fieldErrors.password"
-									:rules="rules.password"
-								/>
+								<LoginPasswordField v-model="form.password" autocomplete="new-password" :error-messages="fieldErrors.password" :rules="rules.password" />
 								<LoginPasswordField
 									v-model="form.password_confirmation"
 									label="Confirm Password"
@@ -44,6 +39,7 @@ import AppTextField from '@/components/AppTextField.vue'
 import LoginEmailField from '@/pages/Auth/Components/LoginEmailField.vue'
 import LoginPasswordField from '@/pages/Auth/Components/LoginPasswordField.vue'
 import axios from '@/services/axios'
+import { setAuthUser } from '@/stores/auth-session'
 import { getFieldErrors, type FieldErrors } from '@/services/api-errors'
 import { validateVuetifyForm } from '@/services/vuetify-form'
 import { email, matches, minLength, required } from '@/services/rules'
@@ -85,6 +81,8 @@ const submit = async () => {
 
 		toast.success(data.message)
 		formRef.value?.reset()
+		setAuthUser(data.data ?? null)
+
 		await router.push({ name: 'dashboard' })
 	} catch (err) {
 		fieldErrors.value = getFieldErrors<RegisterUserPayloadData>(err)

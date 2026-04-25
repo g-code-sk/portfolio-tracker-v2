@@ -31,6 +31,7 @@ import { useRouter } from 'vue-router'
 import LoginEmailField from '@/pages/Auth/Components/LoginEmailField.vue'
 import LoginPasswordField from '@/pages/Auth/Components/LoginPasswordField.vue'
 import axios from '@/services/axios'
+import { setAuthUser } from '@/stores/auth-session'
 import { getFieldErrors, type FieldErrors } from '@/services/api-errors'
 import { validateVuetifyForm, VUETIFY_FORM_CLIENT_VALIDATION_MESSAGE } from '@/services/vuetify-form'
 import { email, minLength, required } from '@/services/rules'
@@ -65,6 +66,8 @@ const submit = async () => {
 		const { data } = await axios.post<ApiSuccessResponse<LoginUserResponseData>>('/api/login', form)
 		toast.success(data.message)
 		formRef.value?.reset()
+		setAuthUser(data.data ?? null)
+
 		await router.push({ name: 'dashboard' })
 	} catch (err) {
 		if (isAxiosError<ApiErrorResponse<keyof LoginUserPayloadData>>(err) && err.response?.status === 401) {
