@@ -11,7 +11,7 @@ This repository uses Laravel as the backend API layer.
 - Shared/common services location: `app/Services`
 - Model location remains: `app/Models`
 - TypeScript generation bridge: `app/Providers/TypeScriptTransformerServiceProvider.php`
-- Current API example endpoint: `GET /api/test-data`
+- Auth endpoints available: `POST /api/register`, `POST /api/login`
 - Backend local URL: `http://127.0.0.1:8000`
 
 ## Local Setup Checklist
@@ -124,6 +124,8 @@ composer ide:generate
 - Frontend app lives in `frontend/` and calls backend in local development.
 - Keep API field names stable; coordinate schema changes with frontend updates.
 - When changing response contracts, update frontend consumers accordingly and regenerate TS types.
+- Use `variant="outlined"` for frontend form inputs to keep input styling consistent.
+- In Vue form field wrapper components, prefer `defineModel` over manual `modelValue` and `update:modelValue` wiring.
 
 ## Tool References
 

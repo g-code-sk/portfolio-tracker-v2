@@ -17,13 +17,6 @@ class UserController extends Controller
     {
         $user = $request->user();
 
-        if ($user === null) {
-            return $apiResponse->make(
-                message: 'Unauthenticated.',
-                status: Response::HTTP_UNAUTHORIZED,
-            );
-        }
-
         return $apiResponse->make(
             message: 'Authenticated user fetched successfully.',
             status: Response::HTTP_OK,

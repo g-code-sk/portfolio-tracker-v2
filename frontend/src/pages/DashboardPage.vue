@@ -3,155 +3,94 @@
 		<v-container class="py-8">
 			<v-row>
 				<v-col cols="12" md="8">
-					<h1 class="text-h3 font-weight-bold mb-2">Dashboard Overview</h1>
-					<p class="text-subtitle-1 text-medium-emphasis">Monitor portfolio snapshot data from your backend test endpoint.</p>
+					<h1 class="text-h3 font-weight-bold mb-2">Your Portfolios</h1>
+					<p class="text-subtitle-1 text-medium-emphasis">Manage the portfolios connected to your account.</p>
 				</v-col>
 				<v-col cols="12" md="4" class="d-flex justify-md-end align-center">
-					<v-btn color="primary" prepend-icon="mdi-refresh" :loading="loading" @click="fetchTestData"> Refresh Data </v-btn>
+					<PortfolioCreateAction @saved="loadPortfolios" @error="setErrorMessage" />
 				</v-col>
 			</v-row>
 
-			<v-alert v-if="error" class="mt-4" type="error" variant="tonal" title="Could not load data" :text="error" />
+			<v-alert v-if="errorMessage" class="mt-4" type="error" variant="tonal" title="Could not load portfolios" :text="errorMessage" />
 
-			<v-row v-if="loading && !response" class="mt-2">
+			<v-row v-if="isLoadingPortfolios" class="mt-2">
 				<v-col cols="12" class="d-flex justify-center py-10">
 					<v-progress-circular indeterminate color="primary" size="56" />
 				</v-col>
 			</v-row>
 
-			<template v-else-if="response">
-				<v-row class="mt-2">
-					<v-col cols="12" sm="6" lg="3">
-						<v-card rounded="lg" elevation="1">
-							<v-card-text>
-								<p class="text-caption text-medium-emphasis">Status</p>
-								<p class="text-h6 font-weight-bold text-capitalize">
-									{{ response.status }}
-								</p>
-							</v-card-text>
-						</v-card>
-					</v-col>
-					<v-col cols="12" sm="6" lg="3">
-						<v-card rounded="lg" elevation="1">
-							<v-card-text>
-								<p class="text-caption text-medium-emphasis">Items</p>
-								<p class="text-h6 font-weight-bold">{{ response.items.length }}</p>
-							</v-card-text>
-						</v-card>
-					</v-col>
-					<v-col cols="12" sm="6" lg="3">
-						<v-card rounded="lg" elevation="1">
-							<v-card-text>
-								<p class="text-caption text-medium-emphasis">Total Value</p>
-								<p class="text-h6 font-weight-bold">{{ formatCurrency(totalValue) }}</p>
-							</v-card-text>
-						</v-card>
-					</v-col>
-					<v-col cols="12" sm="6" lg="3">
-						<v-card rounded="lg" elevation="1">
-							<v-card-text>
-								<p class="text-caption text-medium-emphasis">Average Price</p>
-								<p class="text-h6 font-weight-bold">{{ formatCurrency(averagePrice) }}</p>
-							</v-card-text>
-						</v-card>
-					</v-col>
-				</v-row>
+			<template v-else>
+				<v-card v-if="!portfolios.length" class="mt-4" rounded="lg" elevation="1">
+					<v-card-text class="py-8 text-center">
+						<p class="text-h6 mb-2">No portfolios yet</p>
+						<p class="text-body-1 text-medium-emphasis mb-6">Create your first portfolio to start tracking your investments.</p>
+						<PortfolioCreateAction @saved="loadPortfolios" @error="setErrorMessage" />
+					</v-card-text>
+				</v-card>
 
-				<v-row class="mt-1">
-					<v-col cols="12" lg="8">
-						<v-card rounded="lg" elevation="1">
-							<v-card-item>
-								<v-card-title>Portfolio Items</v-card-title>
-								<v-card-subtitle>
-									Endpoint: <code>{{ endpoint }}</code>
-								</v-card-subtitle>
-							</v-card-item>
-							<v-divider />
-							<v-list lines="two">
-								<v-list-item v-for="item in response.items" :key="item.id" :title="item.name" :subtitle="`ID: ${item.id}`">
-									<template #append>
-										<v-chip color="primary" variant="tonal">
-											{{ formatCurrency(item.price) }}
-										</v-chip>
-									</template>
-								</v-list-item>
-							</v-list>
-						</v-card>
-					</v-col>
-					<v-col cols="12" lg="4">
-						<v-card rounded="lg" elevation="1" class="mb-4">
-							<v-card-item title="Snapshot" subtitle="Latest sync details" />
-							<v-divider />
-							<v-card-text class="d-flex flex-column ga-3">
-								<div>
-									<p class="text-caption text-medium-emphasis mb-1">Message</p>
-									<p class="text-body-1">{{ response.message }}</p>
+				<v-card v-else class="mt-4" rounded="lg" elevation="1">
+					<v-card-item>
+						<v-card-title>Portfolio List</v-card-title>
+						<v-card-subtitle>{{ portfolios.length }} total</v-card-subtitle>
+					</v-card-item>
+					<v-divider />
+					<v-list lines="one">
+						<v-list-item v-for="portfolio in portfolios" :key="portfolio.id" :title="portfolio.name">
+							<template #append>
+								<div class="d-flex ga-2">
+									<PortfolioUpdateAction
+										:portfolio="portfolio"
+										@saved="loadPortfolios"
+										@error="setErrorMessage"
+									/>
+									<PortfolioDeleteAction :portfolio="portfolio" @deleted="loadPortfolios" @error="setErrorMessage" />
 								</div>
-								<div>
-									<p class="text-caption text-medium-emphasis mb-1">Last Updated</p>
-									<p class="text-body-2">{{ refreshTime }}</p>
-								</div>
-							</v-card-text>
-						</v-card>
-						<v-card rounded="lg" elevation="1">
-							<v-card-item title="Top Performing Item" />
-							<v-divider />
-							<v-card-text v-if="topItem">
-								<p class="text-subtitle-1 font-weight-medium">{{ topItem.name }}</p>
-								<p class="text-h6 font-weight-bold text-primary">
-									{{ formatCurrency(topItem.price) }}
-								</p>
-							</v-card-text>
-							<v-card-text v-else> No items available. </v-card-text>
-						</v-card>
-					</v-col>
-				</v-row>
+							</template>
+						</v-list-item>
+					</v-list>
+				</v-card>
 			</template>
 		</v-container>
 	</v-main>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import axios from '@/services/axios'
-import type { TestApiResponseData, TestItemData } from '@/types/generated'
+import { isAxiosError } from 'axios'
+import { onMounted, ref } from 'vue'
+import PortfolioCreateAction from '@/components/portfolios/PortfolioCreateAction.vue'
+import PortfolioDeleteAction from '@/components/portfolios/PortfolioDeleteAction.vue'
+import PortfolioUpdateAction from '@/components/portfolios/PortfolioUpdateAction.vue'
+import { fetchPortfolios } from '@/services/portfolio'
+import type { PortfolioResponseData } from '@/types/generated'
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? window.location.origin : 'http://127.0.0.1:8000')
+const portfolios = ref<PortfolioResponseData[]>([])
+const errorMessage = ref('')
+const isLoadingPortfolios = ref(false)
 
-const loading = ref(false)
-const error = ref('')
-const response = ref<TestApiResponseData | null>(null)
-
-const endpoint = computed(() => `${apiBaseUrl}/api/test-data`)
-const refreshTime = computed(() => (response.value ? new Date(response.value.timestamp).toLocaleString() : '-'))
-const totalValue = computed(() => (response.value ? response.value.items.reduce((sum, item) => sum + item.price, 0) : 0))
-const averagePrice = computed(() => (response.value && response.value.items.length > 0 ? totalValue.value / response.value.items.length : 0))
-const topItem = computed(() => {
-	if (!response.value?.items.length) return null
-
-	return response.value.items.reduce((currentTop: TestItemData, item: TestItemData) => (item.price > currentTop.price ? item : currentTop))
-})
-
-const formatCurrency = (value: number) =>
-	new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: 'USD',
-		maximumFractionDigits: 2,
-	}).format(value)
-
-const fetchTestData = async () => {
-	loading.value = true
-	error.value = ''
+const loadPortfolios = async (): Promise<void> => {
+	isLoadingPortfolios.value = true
+	errorMessage.value = ''
 
 	try {
-		const { data } = await axios.get<TestApiResponseData>('/api/test-data')
-		response.value = data
-	} catch (err) {
-		error.value = err instanceof Error ? err.message : 'Unknown error'
+		portfolios.value = await fetchPortfolios()
+	} catch (error) {
+		errorMessage.value = resolveErrorMessage(error, 'Failed to fetch portfolios.')
 	} finally {
-		loading.value = false
+		isLoadingPortfolios.value = false
 	}
 }
 
-onMounted(fetchTestData)
+const setErrorMessage = (message: string): void => {
+	errorMessage.value = message
+}
+
+const resolveErrorMessage = (error: unknown, fallbackMessage: string): string => {
+	if (isAxiosError<{ message?: string }>(error)) {
+		return error.response?.data?.message ?? fallbackMessage
+	}
+
+	return error instanceof Error ? error.message : fallbackMessage
+}
+
+onMounted(loadPortfolios)
 </script>
