@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import DashboardPage from '@/pages/DashboardPage.vue'
+import PortfoliosPage from '@/pages/PortfoliosPage.vue'
 import LoginPage from '@/pages/Auth/LoginPage.vue'
 import RegisterPage from '@/pages/Auth/RegisterPage.vue'
 import WelcomePage from '@/pages/WelcomePage.vue'
@@ -23,9 +23,9 @@ const router = createRouter({
 			meta: { access: RouteAccess.Public },
 		},
 		{
-			path: '/dashboard',
-			name: 'dashboard',
-			component: DashboardPage,
+			path: '/portfolios',
+			name: 'portfolios',
+			component: PortfoliosPage,
 			meta: { access: RouteAccess.Auth },
 		},
 		{
@@ -55,7 +55,7 @@ router.beforeEach(async (to) => {
 
 	// Middleware-like access control using per-route meta.
 	if (routeAccess === RouteAccess.Guest && isUserAuthenticated) {
-		return { name: 'dashboard' }
+		return { name: 'portfolios' }
 	}
 
 	if (routeAccess === RouteAccess.Auth && !isUserAuthenticated) {
