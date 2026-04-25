@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
+use App\Data\TestApiResponseData;
 
 class TestApiController extends Controller
 {
-    public function __invoke(): JsonResponse
+    public function __invoke(): TestApiResponseData
     {
-        return response()->json([
+        return TestApiResponseData::from([
             'status' => 'ok',
             'message' => 'Backend API is connected.',
             'timestamp' => now()->toIso8601String(),
