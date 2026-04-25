@@ -3,7 +3,7 @@ import DashboardPage from '@/pages/DashboardPage.vue'
 import LoginPage from '@/pages/Auth/LoginPage.vue'
 import RegisterPage from '@/pages/Auth/RegisterPage.vue'
 import WelcomePage from '@/pages/WelcomePage.vue'
-import { initializeAuthState, refreshAuthState } from '@/stores/auth-session'
+import { initializeAuthState, useAuthSession } from '@/stores/auth-session'
 
 const RouteAccess = {
 	Public: 'public',
@@ -45,8 +45,13 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
 	const routeAccess = (to.meta.access as RouteAccess | undefined) ?? RouteAccess.Public
-	const initializedUser = await initializeAuthState()
-	const isUserAuthenticated = initializedUser !== null
+	const { currentUser, isAuthReady } = useAuthSession()
+
+	if (!isAuthReady.value) {
+		await initializeAuthState()
+	}
+
+	const isUserAuthenticated = currentUser.value !== null
 
 	// Middleware-like access control using per-route meta.
 	if (routeAccess === RouteAccess.Guest && isUserAuthenticated) {
@@ -54,11 +59,6 @@ router.beforeEach(async (to) => {
 	}
 
 	if (routeAccess === RouteAccess.Auth && !isUserAuthenticated) {
-		const refreshedUser = await refreshAuthState()
-
-		if (refreshedUser !== null) {
-			return true
-		}
 		return { name: 'login' }
 	}
 

@@ -4,6 +4,8 @@ namespace Domain\Login\Controller;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiResponseService;
+use Domain\Auth\Data\AuthSessionData;
+use Domain\Auth\Data\AuthUserSessionResponseData;
 use Domain\Login\Data\LoginUserPayloadData;
 use Domain\Login\Data\LoginUserResponseData;
 use Illuminate\Http\JsonResponse;
@@ -41,7 +43,10 @@ class LoginController extends Controller
         return $apiResponse->make(
             message: 'Login successful.',
             status: Response::HTTP_OK,
-            data: LoginUserResponseData::from($user),
+            data: new AuthUserSessionResponseData(
+                user: LoginUserResponseData::from($user),
+                session: AuthSessionData::active($request),
+            ),
         );
     }
 }

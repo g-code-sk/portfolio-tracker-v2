@@ -42,7 +42,8 @@ class LoginApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('message', 'Login successful.')
-            ->assertJsonPath('data.email', 'login@example.com');
+            ->assertJsonPath('data.user.email', 'login@example.com')
+            ->assertJsonPath('data.session.isActive', true);
         $this->assertAuthenticated();
     }
 

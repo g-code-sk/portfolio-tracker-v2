@@ -7,7 +7,7 @@ import { initializeAuthState } from '@/stores/auth-session'
 import Vue3Toastify, { type ToastContainerOptions } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 
-void initializeAuthState()
+await initializeAuthState()
 
 createApp(App)
 	.use(vuetify)

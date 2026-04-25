@@ -32,8 +32,9 @@ class RegisterApiTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('message', 'Registration successful.')
-            ->assertJsonPath('data.name', $payload['name'])
-            ->assertJsonPath('data.email', $payload['email']);
+            ->assertJsonPath('data.user.name', $payload['name'])
+            ->assertJsonPath('data.user.email', $payload['email'])
+            ->assertJsonPath('data.session.isActive', true);
 
         $user = User::query()->where('email', $payload['email'])->firstOrFail();
 

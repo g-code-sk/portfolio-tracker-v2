@@ -5,6 +5,8 @@ namespace Domain\Register\Controller;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\ApiResponseService;
+use Domain\Auth\Data\AuthSessionData;
+use Domain\Auth\Data\AuthUserSessionResponseData;
 use Domain\Login\Data\LoginUserResponseData;
 use Domain\Register\Data\RegisterUserPayloadData;
 use Illuminate\Http\JsonResponse;
@@ -32,7 +34,10 @@ class RegisterController extends Controller
         return $apiResponse->make(
             message: 'Registration successful.',
             status: Response::HTTP_CREATED,
-            data: LoginUserResponseData::from($user),
+            data: new AuthUserSessionResponseData(
+                user: LoginUserResponseData::from($user),
+                session: AuthSessionData::active($request),
+            ),
         );
     }
 }

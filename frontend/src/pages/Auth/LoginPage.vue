@@ -13,7 +13,7 @@
 							<v-form ref="formRef" class="d-flex flex-column ga-3" @submit.prevent="submit">
 								<LoginEmailField v-model="form.email" :error-messages="fieldErrors.email" :rules="rules.email" />
 								<LoginPasswordField v-model="form.password" :error-messages="fieldErrors.password" :rules="rules.password" />
-								<v-btn type="submit" color="primary" :loading="loading" block> Log in </v-btn>
+								<v-btn type="submit" color="primary" :loading="isLoading" block> Log in </v-btn>
 							</v-form>
 						</v-card-text>
 					</v-card>
@@ -31,16 +31,16 @@ import { useRouter } from 'vue-router'
 import LoginEmailField from '@/pages/Auth/Components/LoginEmailField.vue'
 import LoginPasswordField from '@/pages/Auth/Components/LoginPasswordField.vue'
 import axios from '@/services/axios'
-import { setAuthUser } from '@/stores/auth-session'
+import { setAuthState } from '@/stores/auth-session'
 import { getFieldErrors, type FieldErrors } from '@/services/api-errors'
 import { validateVuetifyForm, VUETIFY_FORM_CLIENT_VALIDATION_MESSAGE } from '@/services/vuetify-form'
 import { email, minLength, required } from '@/services/rules'
 import type { ApiErrorResponse, ApiSuccessResponse } from '@/types/api'
-import type { LoginUserPayloadData, LoginUserResponseData } from '@/types/generated'
+import type { AuthUserSessionResponseData, LoginUserPayloadData } from '@/types/generated'
 import type { VForm } from 'vuetify/components'
 
 const router = useRouter()
-const loading = ref(false)
+const isLoading = ref(false)
 const fieldErrors = ref<FieldErrors<LoginUserPayloadData>>({})
 const formRef = ref<VForm | null>(null)
 
@@ -59,14 +59,14 @@ const submit = async () => {
 		return
 	}
 
-	loading.value = true
+	isLoading.value = true
 	fieldErrors.value = {}
 
 	try {
-		const { data } = await axios.post<ApiSuccessResponse<LoginUserResponseData>>('/api/login', form)
+		const { data } = await axios.post<ApiSuccessResponse<AuthUserSessionResponseData>>('/api/login', form)
 		toast.success(data.message)
 		formRef.value?.reset()
-		setAuthUser(data.data ?? null)
+		setAuthState(data.data ?? null)
 
 		await router.push({ name: 'dashboard' })
 	} catch (err) {
@@ -82,7 +82,7 @@ const submit = async () => {
 			}
 		}
 	} finally {
-		loading.value = false
+		isLoading.value = false
 	}
 }
 </script>

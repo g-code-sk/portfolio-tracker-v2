@@ -4,6 +4,8 @@ namespace Domain\Auth\Controller;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiResponseService;
+use Domain\Auth\Data\AuthSessionData;
+use Domain\Auth\Data\AuthUserSessionResponseData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +25,10 @@ class LogoutController extends Controller
         return $apiResponse->make(
             message: 'Logout successful.',
             status: Response::HTTP_OK,
+            data: new AuthUserSessionResponseData(
+                user: null,
+                session: AuthSessionData::ended(),
+            ),
         );
     }
 }

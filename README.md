@@ -29,6 +29,25 @@ Frontend runs at `http://127.0.0.1:5173` (or the next free port, for example `51
 
 The frontend is configured to call the backend API at `http://127.0.0.1:8000` in development.
 
+## Auth Refresh Troubleshooting (Sanctum Stateful)
+
+If login works but browser refresh logs the user out, the frontend origin is usually missing from Sanctum's `stateful` host list.
+
+This project supports dynamic localhost ports using wildcards:
+
+- `SANCTUM_STATEFUL_DOMAINS=localhost,localhost:*,127.0.0.1,127.0.0.1:*,::1`
+
+When auth refresh fails:
+
+1. Confirm current frontend URL (for example `http://localhost:5180`).
+2. Ensure `.env` has the wildcard `SANCTUM_STATEFUL_DOMAINS` value above.
+3. Run `php artisan config:clear`.
+4. Log in again and refresh.
+
+Notes:
+- Sanctum checks `Origin` / `Referer` host:port for SPA stateful auth.
+- If the port is not considered stateful, `/api/user` returns unauthenticated on refresh.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

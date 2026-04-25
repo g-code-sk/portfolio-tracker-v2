@@ -1,3 +1,13 @@
+export type AuthSessionData = {
+isActive: boolean,
+lifetimeMinutes: number,
+expiresAt: string | null,
+sessionId: string | null,
+};
+export type AuthUserSessionResponseData = {
+user: LoginUserResponseData | null,
+session: AuthSessionData,
+};
 export type LoginUserPayloadData = {
 email: string,
 password: string,

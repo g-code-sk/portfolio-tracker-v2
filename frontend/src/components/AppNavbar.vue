@@ -15,8 +15,8 @@
 			</v-menu>
 		</template>
 		<template v-else>
-			<v-btn :to="{ name: 'login' }" color="primary" variant="tonal"> Log in </v-btn>
-			<v-btn color="primary" variant="flat" :to="{ name: 'register' }"> Register </v-btn>
+			<v-btn :to="{ name: 'login' }" color="primary"> Log in </v-btn>
+			<v-btn color="primary" :to="{ name: 'register' }"> Register </v-btn>
 		</template>
 	</v-app-bar>
 </template>
@@ -29,10 +29,11 @@ import { useRouter } from 'vue-router'
 import axios from '@/services/axios'
 import { useAuthSession } from '@/stores/auth-session'
 import type { ApiSuccessResponse } from '@/types/api'
+import type { AuthUserSessionResponseData } from '@/types/generated'
 
 const router = useRouter()
 const isLoggingOut = ref(false)
-const { currentUser, clearAuthState, refreshAuthState } = useAuthSession()
+const { currentUser, clearAuthState } = useAuthSession()
 
 const goHome = () => {
 	void router.push({ name: 'home' })
@@ -42,21 +43,15 @@ const logout = async () => {
 	isLoggingOut.value = true
 
 	try {
-		const { data } = await axios.post<ApiSuccessResponse<null>>('/api/logout')
+		const { data } = await axios.post<ApiSuccessResponse<AuthUserSessionResponseData>>('/api/logout')
 		toast.success(data.message)
 		clearAuthState()
 		await router.push({ name: 'login' })
 	} catch (error) {
-		const user = await refreshAuthState()
-
-		if (isAxiosError(error) && error.response?.status === 401) {
+		if (isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 419)) {
 			clearAuthState()
 			await router.push({ name: 'login' })
 			return
-		}
-
-		if (user === null) {
-			await router.push({ name: 'login' })
 		}
 
 		toast.error('Something went wrong while logging out.')
@@ -64,5 +59,4 @@ const logout = async () => {
 		isLoggingOut.value = false
 	}
 }
-
 </script>

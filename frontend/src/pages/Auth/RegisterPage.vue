@@ -21,7 +21,7 @@
 									:error-messages="fieldErrors.password_confirmation"
 									:rules="rules.password_confirmation"
 								/>
-								<v-btn type="submit" color="primary" :loading="loading" block> Register </v-btn>
+								<v-btn type="submit" color="primary" :loading="isLoading" block> Register </v-btn>
 							</v-form>
 						</v-card-text>
 					</v-card>
@@ -39,16 +39,16 @@ import AppTextField from '@/components/AppTextField.vue'
 import LoginEmailField from '@/pages/Auth/Components/LoginEmailField.vue'
 import LoginPasswordField from '@/pages/Auth/Components/LoginPasswordField.vue'
 import axios from '@/services/axios'
-import { setAuthUser } from '@/stores/auth-session'
+import { setAuthState } from '@/stores/auth-session'
 import { getFieldErrors, type FieldErrors } from '@/services/api-errors'
 import { validateVuetifyForm } from '@/services/vuetify-form'
 import { email, matches, minLength, required } from '@/services/rules'
 import type { ApiSuccessResponse } from '@/types/api'
-import type { LoginUserResponseData, RegisterUserPayloadData } from '@/types/generated'
+import type { AuthUserSessionResponseData, RegisterUserPayloadData } from '@/types/generated'
 import type { VForm } from 'vuetify/components'
 
 const router = useRouter()
-const loading = ref(false)
+const isLoading = ref(false)
 const fieldErrors = ref<FieldErrors<RegisterUserPayloadData>>({})
 const formRef = ref<VForm | null>(null)
 
@@ -73,22 +73,22 @@ const submit = async () => {
 		return
 	}
 
-	loading.value = true
+	isLoading.value = true
 	fieldErrors.value = {}
 
 	try {
-		const { data } = await axios.post<ApiSuccessResponse<LoginUserResponseData>>('/api/register', form)
+		const { data } = await axios.post<ApiSuccessResponse<AuthUserSessionResponseData>>('/api/register', form)
 
 		toast.success(data.message)
 		formRef.value?.reset()
-		setAuthUser(data.data ?? null)
+		setAuthState(data.data ?? null)
 
 		await router.push({ name: 'dashboard' })
 	} catch (err) {
 		fieldErrors.value = getFieldErrors<RegisterUserPayloadData>(err)
 		toast.error('Something went wrong while creating your account.')
 	} finally {
-		loading.value = false
+		isLoading.value = false
 	}
 }
 </script>
