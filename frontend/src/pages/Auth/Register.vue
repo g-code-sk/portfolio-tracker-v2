@@ -6,7 +6,7 @@
 					<v-card rounded="lg" elevation="1">
 						<v-card-item>
 							<v-card-title>Create your account</v-card-title>
-							<v-card-subtitle>After you register, you will be taken to the dashboard.</v-card-subtitle>
+							<v-card-subtitle>After you register, you will be taken to your portfolios.</v-card-subtitle>
 						</v-card-item>
 						<v-divider />
 						<v-card-text>
@@ -83,7 +83,7 @@ const submit = async () => {
 		formRef.value?.reset()
 		setAuthState(data.data ?? null)
 
-		await router.push({ name: 'dashboard' })
+		await router.push({ name: 'portfolios' })
 	} catch (err) {
 		fieldErrors.value = getFieldErrors<RegisterUserPayloadData>(err)
 		toast.error('Something went wrong while creating your account.')

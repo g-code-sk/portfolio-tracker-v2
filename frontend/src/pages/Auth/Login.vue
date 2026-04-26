@@ -68,7 +68,7 @@ const submit = async () => {
 		formRef.value?.reset()
 		setAuthState(data.data ?? null)
 
-		await router.push({ name: 'dashboard' })
+		await router.push({ name: 'portfolios' })
 	} catch (err) {
 		if (isAxiosError<ApiErrorResponse<keyof LoginUserPayloadData>>(err) && err.response?.status === 401) {
 			toast.error(err.response.data?.message ?? 'Invalid email or password.')
