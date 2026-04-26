@@ -25,7 +25,7 @@ class RegisterApiTest extends TestCase
             'name' => 'Jane Doe',
             'email' => 'jane@example.com',
             'password' => 'secret123',
-            'password_confirmation' => 'secret123',
+            'passwordConfirmation' => 'secret123',
         ];
 
         $response = $this->postJson('/api/register', $payload);
@@ -48,7 +48,7 @@ class RegisterApiTest extends TestCase
             'name' => 'Jane Doe',
             'email' => 'jane-spa@example.com',
             'password' => 'secret123',
-            'password_confirmation' => 'secret123',
+            'passwordConfirmation' => 'secret123',
         ];
 
         $response = $this
@@ -72,10 +72,10 @@ class RegisterApiTest extends TestCase
             'name' => 'New User',
             'email' => 'existing@example.com',
             'password' => 'secret123',
-            'password_confirmation' => 'not-matching',
+            'passwordConfirmation' => 'not-matching',
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['email', 'password']);
+            ->assertJsonValidationErrors(['email', 'passwordConfirmation']);
     }
 }

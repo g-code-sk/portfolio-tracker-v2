@@ -31,10 +31,10 @@ export type RegisterUserPayloadData = {
 name: string,
 email: string,
 password: string,
-password_confirmation: string,
+passwordConfirmation: string,
 };
 export type TransactionImportPayloadData = {
-import_type: string,
+importType: string,
 file: undefined,
 };
 export type TransactionImportType = "Trading 212" | "Interactive Brokers";

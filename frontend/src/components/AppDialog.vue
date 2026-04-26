@@ -8,7 +8,7 @@
 				<slot name="body" />
 			</v-card-text>
 			<v-card-actions class="justify-end ga-2">
-				<v-btn variant="text" :disabled="disabled" @click="model = false">{{ closeText }}</v-btn>
+				<v-btn variant="tonal" :disabled="disabled" @click="model = false">{{ closeText }}</v-btn>
 				<slot name="actions" />
 			</v-card-actions>
 		</v-card>

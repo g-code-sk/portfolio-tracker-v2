@@ -12,7 +12,7 @@ use Domain\Transaction\Enums\TransactionImportType;
 class TransactionImportPayloadData extends Data
 {
     public function __construct(
-        public string $import_type,
+        public TransactionImportType $importType,
         public UploadedFile $file,
     ) {}
 
@@ -22,7 +22,7 @@ class TransactionImportPayloadData extends Data
     public static function rules(): array
     {
         return [
-            'import_type' => ['required', new Enum(TransactionImportType::class)],
+            'importType' => ['required', new Enum(TransactionImportType::class)],
             'file' => ['required', 'file', 'mimes:csv,xls,xlsx'],
         ];
     }

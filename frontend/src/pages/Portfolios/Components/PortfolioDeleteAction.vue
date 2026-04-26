@@ -10,7 +10,7 @@
 				>?
 			</template>
 			<template #actions>
-				<v-btn color="error" :loading="isSubmitting" @click="confirmDelete">Delete</v-btn>
+				<v-btn color="error" variant="tonal" :loading="isSubmitting" @click="confirmDelete">Delete</v-btn>
 			</template>
 		</AppDialog>
 	</div>

@@ -7,6 +7,11 @@ enum TransactionImportType: string
     case Trading212 = 'Trading 212';
     case InteractiveBrokers = 'Interactive Brokers';
 
+    public function isTrading212Type(): bool
+    {
+        return $this === self::Trading212;
+    }
+
     /**
      * @return array<int, string>
      */

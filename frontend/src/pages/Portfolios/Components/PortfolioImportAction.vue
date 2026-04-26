@@ -16,7 +16,7 @@
 				</v-form>
 			</template>
 			<template #actions>
-				<v-btn color="primary" :disabled="isLoadingImportTypes" :loading="isSubmitting" @click="submitImportForm">Upload</v-btn>
+				<v-btn color="primary" variant="tonal" :disabled="isLoadingImportTypes" :loading="isSubmitting" @click="submitImportForm">Upload</v-btn>
 			</template>
 		</AppDialog>
 	</div>
@@ -87,7 +87,7 @@ const submitImportForm = async (): Promise<void> => {
 
 	try {
 		await uploadTransactionImport(props.portfolioId, {
-			import_type: formImportType.value,
+			importType: formImportType.value,
 			file: formFile.value,
 		})
 		isDialogOpen.value = false

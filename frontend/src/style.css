@@ -3,7 +3,6 @@ body {
   font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Increase global inner spacing for Vuetify dialogs. */
-.v-dialog .v-card {
-  padding: 12px !important;
+.v-card {
+  padding: 12px 8px !important;
 }

@@ -14,7 +14,7 @@ class RegisterUserPayloadData extends Data
         public string $name,
         public string $email,
         public string $password,
-        public string $password_confirmation,
+        public string $passwordConfirmation,
     ) {}
 
     /**
@@ -25,8 +25,8 @@ class RegisterUserPayloadData extends Data
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [...UserCredentialsRules::email(), Rule::unique('users', 'email')],
-            'password' => ['required', 'confirmed', UserCredentialsRules::password()],
-            'password_confirmation' => ['required', 'string'],
+            'password' => ['required', UserCredentialsRules::password()],
+            'passwordConfirmation' => ['required', 'string', 'same:password'],
         ];
     }
 }

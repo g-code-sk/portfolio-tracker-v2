@@ -10,7 +10,7 @@
 				</v-form>
 			</template>
 			<template #actions>
-				<v-btn color="primary" :loading="isSubmitting" @click="submitPortfolioForm">Create</v-btn>
+				<v-btn color="primary" variant="tonal" :loading="isSubmitting" @click="submitPortfolioForm">Create</v-btn>
 			</template>
 		</AppDialog>
 	</div>
