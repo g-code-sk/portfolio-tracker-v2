@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import PortfoliosPage from '@/pages/PortfoliosPage.vue'
-import LoginPage from '@/pages/Auth/LoginPage.vue'
-import RegisterPage from '@/pages/Auth/RegisterPage.vue'
-import WelcomePage from '@/pages/WelcomePage.vue'
+import PortfoliosIndexPage from '@/pages/Portfolios/Index.vue'
+import LoginPage from '@/pages/Auth/Login.vue'
+import RegisterPage from '@/pages/Auth/Register.vue'
+import WelcomePage from '@/pages/HomePage.vue'
 import { initializeAuthState, useAuthSession } from '@/stores/auth-session'
 
 const RouteAccess = {
@@ -25,7 +25,7 @@ const router = createRouter({
 		{
 			path: '/portfolios',
 			name: 'portfolios',
-			component: PortfoliosPage,
+			component: PortfoliosIndexPage,
 			meta: { access: RouteAccess.Auth },
 		},
 		{

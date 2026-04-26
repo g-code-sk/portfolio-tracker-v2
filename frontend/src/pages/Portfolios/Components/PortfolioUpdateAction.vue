@@ -23,13 +23,13 @@
 <script setup lang="ts">
 import { isAxiosError } from 'axios'
 import { ref } from 'vue'
-import PortfolioNameField from '@/components/portfolios/PortfolioNameField.vue'
 import { getFieldErrors } from '@/services/api-errors'
 import { required } from '@/services/rules'
 import { updatePortfolio } from '@/services/portfolio'
 import { validateVuetifyForm } from '@/services/vuetify-form'
 import type { PortfolioPayloadData, PortfolioResponseData } from '@/types/generated'
 import type { VForm } from 'vuetify/components'
+import PortfolioNameField from './PortfolioNameField.vue'
 
 const props = defineProps<{
 	portfolio: PortfolioResponseData

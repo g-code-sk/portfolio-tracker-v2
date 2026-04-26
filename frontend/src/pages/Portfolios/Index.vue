@@ -57,9 +57,9 @@
 <script setup lang="ts">
 import { isAxiosError } from 'axios'
 import { onMounted, ref } from 'vue'
-import PortfolioCreateAction from '@/components/portfolios/PortfolioCreateAction.vue'
-import PortfolioDeleteAction from '@/components/portfolios/PortfolioDeleteAction.vue'
-import PortfolioUpdateAction from '@/components/portfolios/PortfolioUpdateAction.vue'
+import PortfolioCreateAction from './Components/PortfolioCreateAction.vue'
+import PortfolioDeleteAction from './Components/PortfolioDeleteAction.vue'
+import PortfolioUpdateAction from './Components/PortfolioUpdateAction.vue'
 import { fetchPortfolios } from '@/services/portfolio'
 import type { PortfolioResponseData } from '@/types/generated'
 
