@@ -15,6 +15,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PortfolioController extends Controller
 {
+    public function show(
+        Portfolio $portfolio,
+        ApiResponseService $apiResponse
+    ): JsonResponse {
+        Gate::authorize('view', $portfolio);
+
+        return $apiResponse->make(
+            message: 'Portfolio fetched successfully.',
+            status: Response::HTTP_OK,
+            data: PortfolioResponseData::from($portfolio),
+        );
+    }
+
     public function index(Request $request, ApiResponseService $apiResponse): JsonResponse
     {
         $user = $request->user();
