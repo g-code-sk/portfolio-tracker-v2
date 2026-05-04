@@ -15,11 +15,11 @@
 								<LoginEmailField v-model="form.email" autocomplete="email" :error-messages="fieldErrors.email" :rules="rules.email" />
 								<LoginPasswordField v-model="form.password" autocomplete="new-password" :error-messages="fieldErrors.password" :rules="rules.password" />
 								<LoginPasswordField
-									v-model="form.password_confirmation"
+									v-model="form.passwordConfirmation"
 									label="Confirm Password"
 									autocomplete="new-password"
-									:error-messages="fieldErrors.password_confirmation"
-									:rules="rules.password_confirmation"
+									:error-messages="fieldErrors.passwordConfirmation"
+									:rules="rules.passwordConfirmation"
 								/>
 								<v-btn type="submit" color="primary" :loading="isLoading" block> Register </v-btn>
 							</v-form>
@@ -56,14 +56,14 @@ const form = reactive<RegisterUserPayloadData>({
 	name: '',
 	email: '',
 	password: '',
-	password_confirmation: '',
+	passwordConfirmation: '',
 })
 
 const createRegisterRules = (getPassword: () => string) => ({
 	name: [required],
 	email: [required, email],
 	password: [required, minLength(8)],
-	password_confirmation: [required, matches(getPassword)],
+	passwordConfirmation: [required, matches(getPassword)],
 })
 
 const rules = createRegisterRules(() => form.password)

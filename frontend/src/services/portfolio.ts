@@ -1,10 +1,6 @@
 import axios from '@/services/axios'
 import type { ApiSuccessResponse } from '@/types/api'
-import type {
-	PortfolioCollectionResponseData,
-	PortfolioPayloadData,
-	PortfolioResponseData,
-} from '@/types/generated'
+import type { PortfolioCollectionResponseData, PortfolioPayloadData, PortfolioResponseData } from '@/types/generated'
 
 export const fetchPortfolios = async (): Promise<PortfolioResponseData[]> => {
 	const { data } = await axios.get<ApiSuccessResponse<PortfolioCollectionResponseData>>('/api/portfolios')
@@ -13,6 +9,16 @@ export const fetchPortfolios = async (): Promise<PortfolioResponseData[]> => {
 
 export const createPortfolio = async (payload: PortfolioPayloadData): Promise<PortfolioResponseData> => {
 	const { data } = await axios.post<ApiSuccessResponse<PortfolioResponseData>>('/api/portfolios', payload)
+
+	if (!data.data) {
+		throw new Error('Missing portfolio payload in API response.')
+	}
+
+	return data.data
+}
+
+export const fetchPortfolio = async (portfolioId: number): Promise<PortfolioResponseData> => {
+	const { data } = await axios.get<ApiSuccessResponse<PortfolioResponseData>>(`/api/portfolios/${portfolioId}`)
 
 	if (!data.data) {
 		throw new Error('Missing portfolio payload in API response.')

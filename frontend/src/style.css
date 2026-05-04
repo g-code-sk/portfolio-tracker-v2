@@ -2,3 +2,7 @@ body {
   margin: 0;
   font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
 }
+
+.v-card {
+  padding: 12px 8px !important;
+}

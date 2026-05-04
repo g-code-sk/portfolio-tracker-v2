@@ -7,7 +7,7 @@
 					<p class="text-subtitle-1 text-medium-emphasis">Manage the portfolios connected to your account.</p>
 				</v-col>
 				<v-col cols="12" md="4" class="d-flex justify-md-end align-center">
-					<PortfolioCreateAction @saved="loadPortfolios" @error="setErrorMessage" />
+					<PortfolioCreateAction @saved="loadPortfolios" />
 				</v-col>
 			</v-row>
 
@@ -24,7 +24,7 @@
 					<v-card-text class="py-8 text-center">
 						<p class="text-h6 mb-2">No portfolios yet</p>
 						<p class="text-body-1 text-medium-emphasis mb-6">Create your first portfolio to start tracking your investments.</p>
-						<PortfolioCreateAction @saved="loadPortfolios" @error="setErrorMessage" />
+						<PortfolioCreateAction @saved="loadPortfolios" />
 					</v-card-text>
 				</v-card>
 
@@ -35,15 +35,19 @@
 					</v-card-item>
 					<v-divider />
 					<v-list lines="one">
-						<v-list-item v-for="portfolio in portfolios" :key="portfolio.id" :title="portfolio.name">
+						<v-list-item v-for="portfolio in portfolios" :key="portfolio.id">
+							<template #title>
+								<AppLink :to="{ name: 'portfolio-details', params: { portfolioId: portfolio.id } }">
+									{{ portfolio.name }}
+								</AppLink>
+							</template>
 							<template #append>
 								<div class="d-flex ga-2">
 									<PortfolioUpdateAction
 										:portfolio="portfolio"
 										@saved="loadPortfolios"
-										@error="setErrorMessage"
 									/>
-									<PortfolioDeleteAction :portfolio="portfolio" @deleted="loadPortfolios" @error="setErrorMessage" />
+									<PortfolioDeleteAction :portfolio="portfolio" @deleted="loadPortfolios" />
 								</div>
 							</template>
 						</v-list-item>
@@ -60,6 +64,7 @@ import { onMounted, ref } from 'vue'
 import PortfolioCreateAction from './Components/PortfolioCreateAction.vue'
 import PortfolioDeleteAction from './Components/PortfolioDeleteAction.vue'
 import PortfolioUpdateAction from './Components/PortfolioUpdateAction.vue'
+import AppLink from '@/components/AppLink.vue'
 import { fetchPortfolios } from '@/services/portfolio'
 import type { PortfolioResponseData } from '@/types/generated'
 
@@ -78,10 +83,6 @@ const loadPortfolios = async (): Promise<void> => {
 	} finally {
 		isLoadingPortfolios.value = false
 	}
-}
-
-const setErrorMessage = (message: string): void => {
-	errorMessage.value = message
 }
 
 const resolveErrorMessage = (error: unknown, fallbackMessage: string): string => {
