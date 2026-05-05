@@ -28,6 +28,10 @@ securityId: number,
 ticker: string,
 name: string,
 currency: string,
+sharesBought: number,
+sharesSold: number,
+investedAmount: number,
+soldAmount: number,
 totalShares: number,
 };
 export type PortfolioPositionsResponseData = {

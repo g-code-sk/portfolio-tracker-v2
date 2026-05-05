@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Enums;
+namespace Domain\Transaction\Enums;
 
-enum SecurityTypeCode: string
+enum TransactionTypeCode: string
 {
     case Buy = 'buy';
     case Sell = 'sell';

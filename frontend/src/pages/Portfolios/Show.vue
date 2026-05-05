@@ -16,7 +16,7 @@
 						<p class="text-subtitle-1 text-medium-emphasis">Portfolio details, positions, and transactions.</p>
 					</v-col>
 					<v-col cols="12" md="4" class="d-flex justify-md-end">
-						<PortfolioImportAction :portfolio-id="portfolio.id" />
+						<PortfolioImportAction :portfolio-id="portfolio.id" @imported="loadPortfolioPositions" />
 					</v-col>
 				</v-row>
 
@@ -38,6 +38,10 @@
 										<th class="text-left">Ticker</th>
 										<th class="text-left">Name</th>
 										<th class="text-left">Currency</th>
+										<th class="text-right">Shares Bought</th>
+										<th class="text-right">Shares Sold</th>
+										<th class="text-right">Invested Amount</th>
+										<th class="text-right">Sold Amount</th>
 										<th class="text-right">Total Shares</th>
 									</tr>
 								</thead>
@@ -46,7 +50,11 @@
 										<td>{{ position.ticker }}</td>
 										<td>{{ position.name }}</td>
 										<td>{{ position.currency }}</td>
-										<td class="text-right">{{ position.totalShares }}</td>
+										<td class="text-right">{{ formatDecimal(position.sharesBought) }}</td>
+										<td class="text-right">{{ formatDecimal(position.sharesSold) }}</td>
+										<td class="text-right">{{ formatDecimal(position.investedAmount) }}</td>
+										<td class="text-right">{{ formatDecimal(position.soldAmount) }}</td>
+										<td class="text-right">{{ formatDecimal(position.totalShares) }}</td>
 									</tr>
 								</tbody>
 							</v-table>
@@ -105,6 +113,10 @@ const resolveErrorMessage = (error: unknown, fallbackMessage: string): string =>
 	}
 
 	return error instanceof Error ? error.message : fallbackMessage
+}
+
+const formatDecimal = (value: number): string => {
+	return value.toFixed(2)
 }
 
 onMounted(async () => {

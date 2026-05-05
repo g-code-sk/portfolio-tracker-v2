@@ -36,6 +36,9 @@ import PortfolioImportTypeField from './PortfolioImportTypeField.vue'
 const props = defineProps<{
 	portfolioId: number
 }>()
+const emit = defineEmits<{
+	imported: []
+}>()
 
 const isDialogOpen = ref(false)
 const isLoadingImportTypes = ref(false)
@@ -91,6 +94,7 @@ const submitImportForm = async (): Promise<void> => {
 			file: formFile.value,
 		})
 		isDialogOpen.value = false
+		emit('imported')
 	} catch (error) {
 		console.error('Transaction import upload failed', error)
 		toast.error('Something went wrong when importing transactions.')

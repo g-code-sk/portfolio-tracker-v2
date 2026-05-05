@@ -13,6 +13,10 @@ class PortfolioPositionResponseData extends Data
         public string $ticker,
         public string $name,
         public string $currency,
+        public float $sharesBought,
+        public float $sharesSold,
+        public float $investedAmount,
+        public float $soldAmount,
         public float $totalShares,
     ) {}
 }

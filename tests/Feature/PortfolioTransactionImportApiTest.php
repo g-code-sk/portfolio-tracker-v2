@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\Portfolio;
 use App\Models\Transaction;
 use App\Models\User;
-use Database\Seeders\SecurityTypeSeeder;
+use Database\Seeders\TransactionTypeSeeder;
 use Domain\Transaction\Enums\TransactionImportType;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -107,7 +107,7 @@ class PortfolioTransactionImportApiTest extends TestCase
 
     public function test_non_trading212_import_does_not_persist_transactions(): void
     {
-        $this->seed(SecurityTypeSeeder::class);
+        $this->seed(TransactionTypeSeeder::class);
 
         [$user, $portfolio] = $this->createUserWithPortfolio();
 
@@ -130,7 +130,7 @@ class PortfolioTransactionImportApiTest extends TestCase
 
     public function test_trading212_import_rejects_invalid_headers(): void
     {
-        $this->seed(SecurityTypeSeeder::class);
+        $this->seed(TransactionTypeSeeder::class);
 
         [$user, $portfolio] = $this->createUserWithPortfolio();
 
@@ -152,7 +152,7 @@ class PortfolioTransactionImportApiTest extends TestCase
 
     public function test_trading212_import_persists_market_buy_and_skips_deposit(): void
     {
-        $this->seed(SecurityTypeSeeder::class);
+        $this->seed(TransactionTypeSeeder::class);
 
         [$user, $portfolio] = $this->createUserWithPortfolio();
 

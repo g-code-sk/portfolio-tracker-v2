@@ -2,7 +2,6 @@
 
 namespace Domain\Portfolio\Controller;
 
-use App\Enums\SecurityTypeCode;
 use App\Http\Controllers\Controller;
 use App\Models\Portfolio;
 use App\Models\Transaction;
@@ -22,42 +21,20 @@ class PortfolioPositionsController extends Controller
         Gate::authorize('view', $portfolio);
 
         $aggregatedRows = Transaction::query()
-            ->where('transactions.portfolio_id', $portfolio->id)
-            ->join('securities', 'securities.id', '=', 'transactions.security_id')
-            ->join('currencies', 'currencies.id', '=', 'transactions.currency_id')
-            ->join('security_types', 'security_types.id', '=', 'transactions.type_id')
-            ->selectRaw(
-                '
-                transactions.security_id as security_id,
-                securities.ticker as ticker,
-                securities.name as name,
-                currencies.symbol as currency,
-                SUM(
-                    CASE
-                        WHEN security_types.code = ? THEN transactions.number_of_shares
-                        ELSE -transactions.number_of_shares
-                    END
-                ) as total_shares
-                ',
-                [SecurityTypeCode::Buy->value]
-            )
-            ->groupBy(
-                'transactions.security_id',
-                'securities.ticker',
-                'securities.name',
-                'transactions.currency_id',
-                'currencies.symbol',
-            )
-            ->orderBy('securities.ticker')
+            ->portfolioPositionMetrics($portfolio->id)
             ->get();
 
         $positions = $aggregatedRows->map(
             fn (object $aggregatedRow): PortfolioPositionResponseData => new PortfolioPositionResponseData(
-                securityId: (int) $aggregatedRow->security_id,
-                ticker: $aggregatedRow->ticker,
-                name: $aggregatedRow->name,
-                currency: $aggregatedRow->currency,
-                totalShares: (float) $aggregatedRow->total_shares,
+                (int) $aggregatedRow->security_id,
+                $aggregatedRow->ticker,
+                $aggregatedRow->name,
+                $aggregatedRow->currency,
+                (float) $aggregatedRow->shares_bought,
+                (float) $aggregatedRow->shares_sold,
+                (float) $aggregatedRow->invested_amount,
+                (float) $aggregatedRow->sold_amount,
+                (float) $aggregatedRow->total_shares,
             )
         );
 
