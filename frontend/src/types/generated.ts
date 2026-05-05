@@ -23,6 +23,16 @@ portfolios: Array<any>,
 export type PortfolioPayloadData = {
 name: string,
 };
+export type PortfolioPositionResponseData = {
+securityId: number,
+ticker: string,
+name: string,
+currency: string,
+totalShares: number,
+};
+export type PortfolioPositionsResponseData = {
+positions: PortfolioPositionResponseData[],
+};
 export type PortfolioResponseData = {
 id: number,
 name: string,

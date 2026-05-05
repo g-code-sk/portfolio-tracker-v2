@@ -21,33 +21,35 @@
 				</v-row>
 
 				<v-row class="mt-4">
-					<v-col cols="12" md="6">
+					<v-col cols="12">
 						<v-card rounded="lg" elevation="1">
 							<v-card-item>
 								<v-card-title>Positions</v-card-title>
-								<v-card-subtitle>Dummy content</v-card-subtitle>
+								<v-card-subtitle>Grouped by security and currency</v-card-subtitle>
 							</v-card-item>
 							<v-divider />
-							<v-list lines="two">
-								<v-list-item title="AAPL" subtitle="10 shares - Avg. price $165.20" />
-								<v-list-item title="MSFT" subtitle="6 shares - Avg. price $402.10" />
-								<v-list-item title="NVDA" subtitle="3 shares - Avg. price $850.50" />
-							</v-list>
-						</v-card>
-					</v-col>
-
-					<v-col cols="12" md="6">
-						<v-card rounded="lg" elevation="1">
-							<v-card-item>
-								<v-card-title>Transactions</v-card-title>
-								<v-card-subtitle>Dummy content</v-card-subtitle>
-							</v-card-item>
-							<v-divider />
-							<v-list lines="two">
-								<v-list-item title="Buy AAPL" subtitle="2026-04-01 - 5 shares - $160.00" />
-								<v-list-item title="Buy MSFT" subtitle="2026-04-08 - 6 shares - $398.00" />
-								<v-list-item title="Buy NVDA" subtitle="2026-04-15 - 3 shares - $845.00" />
-							</v-list>
+							<v-card-text v-if="isLoadingPositions" class="d-flex justify-center py-8">
+								<v-progress-circular indeterminate color="primary" size="32" />
+							</v-card-text>
+							<v-card-text v-else-if="!portfolioPositions.length" class="text-medium-emphasis py-8 text-center"> No positions yet. </v-card-text>
+							<v-table v-else>
+								<thead>
+									<tr>
+										<th class="text-left">Ticker</th>
+										<th class="text-left">Name</th>
+										<th class="text-left">Currency</th>
+										<th class="text-right">Total Shares</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="position in portfolioPositions" :key="`${position.securityId}-${position.currency}`">
+										<td>{{ position.ticker }}</td>
+										<td>{{ position.name }}</td>
+										<td>{{ position.currency }}</td>
+										<td class="text-right">{{ position.totalShares }}</td>
+									</tr>
+								</tbody>
+							</v-table>
 						</v-card>
 					</v-col>
 				</v-row>
@@ -62,12 +64,14 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue3-toastify'
 import PortfolioImportAction from './Components/PortfolioImportAction.vue'
-import { fetchPortfolio } from '@/services/portfolio'
-import type { PortfolioResponseData } from '@/types/generated'
+import { fetchPortfolio, fetchPortfolioPositions } from '@/services/portfolio'
+import type { PortfolioPositionResponseData, PortfolioResponseData } from '@/types/generated'
 
 const route = useRoute()
 const portfolio = ref<PortfolioResponseData | null>(null)
+const portfolioPositions = ref<PortfolioPositionResponseData[]>([])
 const isLoadingPortfolio = ref(false)
+const isLoadingPositions = ref(false)
 
 const portfolioId = computed(() => Number(route.params.portfolioId))
 
@@ -83,6 +87,18 @@ const loadPortfolio = async (): Promise<void> => {
 	}
 }
 
+const loadPortfolioPositions = async (): Promise<void> => {
+	isLoadingPositions.value = true
+
+	try {
+		portfolioPositions.value = await fetchPortfolioPositions(portfolioId.value)
+	} catch (error) {
+		toast.error(resolveErrorMessage(error, 'Failed to fetch portfolio positions.'))
+	} finally {
+		isLoadingPositions.value = false
+	}
+}
+
 const resolveErrorMessage = (error: unknown, fallbackMessage: string): string => {
 	if (isAxiosError<{ message?: string }>(error)) {
 		return error.response?.data?.message ?? fallbackMessage
@@ -91,5 +107,7 @@ const resolveErrorMessage = (error: unknown, fallbackMessage: string): string =>
 	return error instanceof Error ? error.message : fallbackMessage
 }
 
-onMounted(loadPortfolio)
+onMounted(async () => {
+	await Promise.all([loadPortfolio(), loadPortfolioPositions()])
+})
 </script>
