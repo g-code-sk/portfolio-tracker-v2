@@ -26,6 +26,7 @@
 import { ref } from 'vue'
 import { toast } from 'vue3-toastify'
 import AppDialog from '@/components/AppDialog.vue'
+import { getApiUserFacingMessage } from '@/services/api-errors'
 import { fetchTransactionImportTypes, uploadTransactionImport } from '@/services/transaction'
 import { validateVuetifyForm } from '@/services/vuetify-form'
 import type { TransactionImportType } from '@/types/generated'
@@ -35,6 +36,9 @@ import PortfolioImportTypeField from './PortfolioImportTypeField.vue'
 
 const props = defineProps<{
 	portfolioId: number
+}>()
+const emit = defineEmits<{
+	imported: []
 }>()
 
 const isDialogOpen = ref(false)
@@ -91,9 +95,10 @@ const submitImportForm = async (): Promise<void> => {
 			file: formFile.value,
 		})
 		isDialogOpen.value = false
+		emit('imported')
 	} catch (error) {
 		console.error('Transaction import upload failed', error)
-		toast.error('Something went wrong when importing transactions.')
+		toast.error(getApiUserFacingMessage(error, 'Something went wrong when importing transactions.'))
 	} finally {
 		isSubmitting.value = false
 	}

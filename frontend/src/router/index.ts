@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import PortfoliosIndexPage from '@/pages/Portfolios/Index.vue'
 import PortfolioShowPage from '@/pages/Portfolios/Show.vue'
+import PositionTransactionsPage from '@/pages/Portfolios/PositionTransactions.vue'
 import LoginPage from '@/pages/Auth/Login.vue'
 import RegisterPage from '@/pages/Auth/Register.vue'
 import WelcomePage from '@/pages/HomePage.vue'
@@ -33,6 +34,12 @@ const router = createRouter({
 			path: '/portfolios/:portfolioId',
 			name: 'portfolio-details',
 			component: PortfolioShowPage,
+			meta: { access: RouteAccess.Auth },
+		},
+		{
+			path: '/portfolios/:portfolioId/positions/:securityId/transactions',
+			name: 'portfolio-position-transactions',
+			component: PositionTransactionsPage,
 			meta: { access: RouteAccess.Auth },
 		},
 		{

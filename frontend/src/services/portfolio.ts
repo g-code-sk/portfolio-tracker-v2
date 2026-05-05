@@ -1,6 +1,12 @@
 import axios from '@/services/axios'
 import type { ApiSuccessResponse } from '@/types/api'
-import type { PortfolioCollectionResponseData, PortfolioPayloadData, PortfolioResponseData } from '@/types/generated'
+import type {
+	PortfolioCollectionResponseData,
+	PortfolioPayloadData,
+	PortfolioPositionResponseData,
+	PortfolioPositionsResponseData,
+	PortfolioResponseData,
+} from '@/types/generated'
 
 export const fetchPortfolios = async (): Promise<PortfolioResponseData[]> => {
 	const { data } = await axios.get<ApiSuccessResponse<PortfolioCollectionResponseData>>('/api/portfolios')
@@ -25,6 +31,11 @@ export const fetchPortfolio = async (portfolioId: number): Promise<PortfolioResp
 	}
 
 	return data.data
+}
+
+export const fetchPortfolioPositions = async (portfolioId: number): Promise<PortfolioPositionResponseData[]> => {
+	const { data } = await axios.get<ApiSuccessResponse<PortfolioPositionsResponseData>>(`/api/portfolios/${portfolioId}/positions`)
+	return data.data?.positions ?? []
 }
 
 export const updatePortfolio = async (portfolioId: number, payload: PortfolioPayloadData): Promise<PortfolioResponseData> => {

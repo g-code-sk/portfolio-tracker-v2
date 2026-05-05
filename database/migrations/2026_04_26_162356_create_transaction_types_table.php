@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('security_types', function (Blueprint $table) {
+        Schema::create('transaction_types', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
             $table->string('code')->unique();
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('security_types');
+        Schema::dropIfExists('transaction_types');
     }
 };
