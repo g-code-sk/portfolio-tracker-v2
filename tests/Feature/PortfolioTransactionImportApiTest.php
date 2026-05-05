@@ -201,5 +201,98 @@ class PortfolioTransactionImportApiTest extends TestCase
         $this->assertSame('11111111-1111-1111-1111-111111111111', $transaction->external_transaction_id);
         $this->assertSame(1.0, (float) $transaction->number_of_shares);
         $this->assertSame(10.0, (float) $transaction->price_per_share);
+        $this->assertSame('2022-01-31', $transaction->executed_at->toDateString());
+    }
+
+    public function test_trading212_import_rejects_market_buy_with_missing_time(): void
+    {
+        $this->seed(TransactionTypeSeeder::class);
+
+        [$user, $portfolio] = $this->createUserWithPortfolio();
+
+        [$header] = $this->trading212HeaderAndDepositRow();
+
+        $buyRowWithoutTime = implode(',', [
+            'Market buy',
+            '',
+            'US1234567890',
+            'TEST',
+            'Test Co',
+            '',
+            '22222222-2222-2222-2222-222222222222',
+            '1.0000000000',
+            '10.0000000000',
+            'USD',
+            '1.00000000',
+            '',
+            '',
+            '10.00',
+            'USD',
+            '',
+            '',
+            '',
+            '',
+        ]);
+
+        $csv = $header."\n".$buyRowWithoutTime."\n";
+        $file = UploadedFile::fake()->createWithContent('import.csv', $csv);
+
+        $response = $this->actingAsSpaUser($user)->post(
+            "/api/portfolios/{$portfolio->id}/transactions/import",
+            [
+                'importType' => TransactionImportType::Trading212->value,
+                'file' => $file,
+            ],
+        );
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['file']);
+
+        $this->assertSame(0, Transaction::query()->where('portfolio_id', $portfolio->id)->count());
+    }
+
+    public function test_trading212_import_rejects_market_buy_with_invalid_time_format(): void
+    {
+        $this->seed(TransactionTypeSeeder::class);
+
+        [$user, $portfolio] = $this->createUserWithPortfolio();
+
+        [$header] = $this->trading212HeaderAndDepositRow();
+
+        $buyRowWithBadTime = implode(',', [
+            'Market buy',
+            '31-01-2022',
+            'US1234567890',
+            'TEST',
+            'Test Co',
+            '',
+            '33333333-3333-3333-3333-333333333333',
+            '1.0000000000',
+            '10.0000000000',
+            'USD',
+            '1.00000000',
+            '',
+            '',
+            '10.00',
+            'USD',
+            '',
+            '',
+            '',
+            '',
+        ]);
+
+        $csv = $header."\n".$buyRowWithBadTime."\n";
+        $file = UploadedFile::fake()->createWithContent('import.csv', $csv);
+
+        $response = $this->actingAsSpaUser($user)->post(
+            "/api/portfolios/{$portfolio->id}/transactions/import",
+            [
+                'importType' => TransactionImportType::Trading212->value,
+                'file' => $file,
+            ],
+        );
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['file']);
+
+        $this->assertSame(0, Transaction::query()->where('portfolio_id', $portfolio->id)->count());
     }
 }

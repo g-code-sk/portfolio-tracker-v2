@@ -10,9 +10,10 @@ class PortfolioPositionResponseData extends Data
 {
     public function __construct(
         public int $securityId,
+        public int $currencyId,
         public string $ticker,
         public string $name,
-        public string $currency,
+        public string $currencySymbol,
         public float $sharesBought,
         public float $sharesSold,
         public float $investedAmount,

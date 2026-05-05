@@ -25,9 +25,10 @@ name: string,
 };
 export type PortfolioPositionResponseData = {
 securityId: number,
+currencyId: number,
 ticker: string,
 name: string,
-currency: string,
+currencySymbol: string,
 sharesBought: number,
 sharesSold: number,
 investedAmount: number,
@@ -35,11 +36,26 @@ soldAmount: number,
 totalShares: number,
 };
 export type PortfolioPositionsResponseData = {
-positions: PortfolioPositionResponseData[],
+positions: Array<any>,
 };
 export type PortfolioResponseData = {
 id: number,
 name: string,
+};
+export type PortfolioTransactionResponseData = {
+id: number,
+externalTransactionId: string,
+ticker: string,
+name: string,
+typeCode: string,
+numberOfShares: number,
+pricePerShare: number,
+totalAmount: number,
+currencySymbol: string,
+executedAt: string,
+};
+export type PortfolioTransactionsResponseData = {
+transactions: Array<any>,
 };
 export type RegisterUserPayloadData = {
 name: string,
@@ -47,11 +63,13 @@ email: string,
 password: string,
 passwordConfirmation: string,
 };
+export type Trading212TransactionType = "Market buy" | "Market sell";
 export type TransactionImportPayloadData = {
-importType: string,
+importType: TransactionImportType,
 file: undefined,
 };
 export type TransactionImportType = "Trading 212" | "Interactive Brokers";
 export type TransactionImportTypesResponseData = {
 importTypes: string[],
 };
+export type TransactionTypeCode = "buy" | "sell";

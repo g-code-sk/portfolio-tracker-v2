@@ -1,0 +1,108 @@
+<template>
+	<v-main class="bg-grey-lighten-5">
+		<v-container class="py-8">
+			<v-btn class="mb-4" variant="text" prepend-icon="mdi-arrow-left" :to="{ name: 'portfolio-details', params: { portfolioId } }"> Back to Portfolio </v-btn>
+
+			<v-row class="align-center">
+				<v-col cols="12">
+					<h1 class="text-h3 font-weight-bold mb-2">{{ positionTitle }}</h1>
+					<p class="text-subtitle-1 text-medium-emphasis">Transactions for the selected portfolio position.</p>
+				</v-col>
+			</v-row>
+
+			<v-row class="mt-4">
+				<v-col cols="12">
+					<v-card rounded="lg" elevation="1">
+						<v-card-item>
+							<v-card-title>Transactions</v-card-title>
+							<v-card-subtitle>{{ transactions.length }} total</v-card-subtitle>
+						</v-card-item>
+						<v-divider />
+
+						<v-card-text v-if="isLoadingTransactions" class="d-flex justify-center py-8">
+							<v-progress-circular indeterminate color="primary" size="32" />
+						</v-card-text>
+
+						<v-card-text v-else-if="!transactions.length" class="text-medium-emphasis py-8 text-center">
+							No matching transactions found for this position.
+						</v-card-text>
+
+						<v-data-table v-else :headers="headers" :items="transactions">
+							<template #item.executedAt="{ item }">
+								{{ formatDate(item.executedAt) }}
+							</template>
+							<template #item.numberOfShares="{ item }">
+								<span class="d-flex justify-end">{{ formatDecimal(item.numberOfShares) }}</span>
+							</template>
+							<template #item.pricePerShare="{ item }">
+								<span class="d-flex justify-end">{{ formatDecimal(item.pricePerShare) }}</span>
+							</template>
+							<template #item.totalAmount="{ item }">
+								<span class="d-flex justify-end">{{ formatDecimal(item.totalAmount) }}</span>
+							</template>
+						</v-data-table>
+					</v-card>
+				</v-col>
+			</v-row>
+		</v-container>
+	</v-main>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { toast } from 'vue3-toastify'
+import { fetchPositionTransactions } from '@/services/transaction'
+import { formatDecimal } from '@/format/number'
+import { formatDate } from '@/format/date'
+import type { PortfolioTransactionResponseData } from '@/types/generated'
+
+const route = useRoute()
+const transactions = ref<PortfolioTransactionResponseData[]>([])
+const isLoadingTransactions = ref(false)
+
+const portfolioId = computed(() => Number(route.params.portfolioId))
+const securityId = computed(() => Number(route.params.securityId))
+const currencyId = computed(() => {
+	const queryValue = route.query.currencyId
+	if (queryValue === undefined) {
+		return null
+	}
+
+	const parsedValue = Number(queryValue)
+
+	return Number.isNaN(parsedValue) ? null : parsedValue
+})
+const ticker = computed(() => String(route.query.ticker ?? ''))
+const currencySymbol = computed(() => transactions.value[0]?.currencySymbol ?? '')
+const positionTitle = computed(() => {
+	const label = currencySymbol.value ? ` (${currencySymbol.value})` : ''
+	return `${ticker.value || 'Position'}${label}`
+})
+
+const headers = [
+	{ title: 'Date', key: 'executedAt', sortable: true },
+	{ title: 'Type', key: 'typeCode', sortable: true },
+	{ title: 'Ticker', key: 'ticker', sortable: true },
+	{ title: 'Name', key: 'name', sortable: true },
+	{ title: 'Shares', key: 'numberOfShares', sortable: true, align: 'end' as const },
+	{ title: 'Price / Share', key: 'pricePerShare', sortable: true, align: 'end' as const },
+	{ title: 'Total', key: 'totalAmount', sortable: true, align: 'end' as const },
+	{ title: 'Currency', key: 'currencySymbol', sortable: true },
+]
+
+const loadTransactions = async (): Promise<void> => {
+	isLoadingTransactions.value = true
+
+	try {
+		transactions.value = await fetchPositionTransactions(portfolioId.value, securityId.value, currencyId.value)
+	} catch (error) {
+		console.error('Position transactions fetch failed', error)
+		toast.error('Something went wrong when loading position transactions.')
+	} finally {
+		isLoadingTransactions.value = false
+	}
+}
+
+onMounted(loadTransactions)
+</script>

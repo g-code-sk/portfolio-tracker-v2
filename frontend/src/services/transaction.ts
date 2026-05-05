@@ -1,6 +1,12 @@
 import axios from '@/services/axios'
 import type { ApiSuccessResponse } from '@/types/api'
-import type { TransactionImportPayloadData, TransactionImportType, TransactionImportTypesResponseData } from '@/types/generated'
+import type {
+	PortfolioTransactionResponseData,
+	PortfolioTransactionsResponseData,
+	TransactionImportPayloadData,
+	TransactionImportType,
+	TransactionImportTypesResponseData,
+} from '@/types/generated'
 
 type TransactionImportUploadPayload = Omit<TransactionImportPayloadData, 'importType' | 'file'> & {
 	importType: TransactionImportType
@@ -24,4 +30,25 @@ export const uploadTransactionImport = async (portfolioId: number, payload: Tran
 			'Content-Type': 'multipart/form-data',
 		},
 	})
+}
+
+export const fetchPositionTransactions = async (
+	portfolioId: number,
+	securityId: number,
+	currencyId: number | null
+): Promise<PortfolioTransactionResponseData[]> => {
+	const params: { securityId: number; currencyId?: number } = { securityId }
+
+	if (currencyId !== null) {
+		params.currencyId = currencyId
+	}
+
+	const { data } = await axios.get<ApiSuccessResponse<PortfolioTransactionsResponseData>>(
+		`/api/portfolios/${portfolioId}/transactions`,
+		{
+			params,
+		}
+	)
+
+	return data.data?.transactions ?? []
 }

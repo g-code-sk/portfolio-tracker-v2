@@ -10,6 +10,9 @@ use App\Models\TransactionType;
 use Domain\Transaction\Data\Trading212ImportRowData;
 use Domain\Transaction\Enums\Trading212TransactionType;
 use Domain\Transaction\Enums\TransactionTypeCode;
+use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
+use Domain\Transaction\Exception\InvalidExecutionTimeTrading212ImportException;
 use Domain\Transaction\Exception\InvalidPriceCurrencyTrading212ImportException;
 use Domain\Transaction\Exception\MissingExternalTransactionIdTrading212ImportException;
 use Domain\Transaction\Exception\MissingPriceCurrencyTrading212ImportException;
@@ -75,6 +78,19 @@ class ImportTrading212TransactionsAction
         if (! is_numeric($importRow->numberOfShares) || ! is_numeric($importRow->pricePerShare)) {
             throw NonNumericShareOrPriceTrading212ImportException::fromImportRow($importRow);
         }
+
+        if ($importRow->time === null) {
+            throw InvalidExecutionTimeTrading212ImportException::fromImportRow($importRow);
+        }
+    }
+
+    private function parseExecutedAt(Trading212ImportRowData $importRow): string
+    {
+        try {
+            return Carbon::createFromFormat('Y-m-d H:i:s', $importRow->time)->toDateString();
+        } catch (InvalidFormatException) {
+            throw InvalidExecutionTimeTrading212ImportException::fromImportRow($importRow);
+        }
     }
 
     private function createTransactions(Collection $importRows, Portfolio $portfolio, Collection $transactionTypesByCode): void
@@ -98,6 +114,7 @@ class ImportTrading212TransactionsAction
                         'number_of_shares' => $importRow->numberOfShares,
                         'price_per_share' => $importRow->pricePerShare,
                         'currency_id' => $currency->id,
+                        'executed_at' => $this->parseExecutedAt($importRow),
                     ],
                 );
             });

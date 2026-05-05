@@ -27,6 +27,7 @@ class PortfolioPositionsController extends Controller
         $positions = $aggregatedRows->map(
             fn (object $aggregatedRow): PortfolioPositionResponseData => new PortfolioPositionResponseData(
                 (int) $aggregatedRow->security_id,
+                (int) $aggregatedRow->currency_id,
                 $aggregatedRow->ticker,
                 $aggregatedRow->name,
                 $aggregatedRow->currency,

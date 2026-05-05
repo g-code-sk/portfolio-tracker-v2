@@ -37,24 +37,34 @@
 									<tr>
 										<th class="text-left">Ticker</th>
 										<th class="text-left">Name</th>
-										<th class="text-left">Currency</th>
 										<th class="text-right">Shares Bought</th>
 										<th class="text-right">Shares Sold</th>
 										<th class="text-right">Invested Amount</th>
 										<th class="text-right">Sold Amount</th>
 										<th class="text-right">Total Shares</th>
+										<th class="text-left">Currency</th>
 									</tr>
 								</thead>
 								<tbody>
-									<tr v-for="position in portfolioPositions" :key="`${position.securityId}-${position.currency}`">
-										<td>{{ position.ticker }}</td>
+									<tr v-for="position in portfolioPositions" :key="`${position.securityId}-${position.currencySymbol}`">
+										<td>
+											<AppLink
+												:to="{
+													name: 'portfolio-position-transactions',
+													params: { portfolioId, securityId: position.securityId },
+													query: { currencyId: position.currencyId, ticker: position.ticker },
+												}"
+											>
+												{{ position.ticker }}
+											</AppLink>
+										</td>
 										<td>{{ position.name }}</td>
-										<td>{{ position.currency }}</td>
 										<td class="text-right">{{ formatDecimal(position.sharesBought) }}</td>
 										<td class="text-right">{{ formatDecimal(position.sharesSold) }}</td>
 										<td class="text-right">{{ formatDecimal(position.investedAmount) }}</td>
 										<td class="text-right">{{ formatDecimal(position.soldAmount) }}</td>
 										<td class="text-right">{{ formatDecimal(position.totalShares) }}</td>
+										<td>{{ position.currencySymbol }}</td>
 									</tr>
 								</tbody>
 							</v-table>
@@ -72,7 +82,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue3-toastify'
 import PortfolioImportAction from './Components/PortfolioImportAction.vue'
+import AppLink from '@/components/AppLink.vue'
 import { fetchPortfolio, fetchPortfolioPositions } from '@/services/portfolio'
+import { formatDecimal } from '@/format/number'
 import type { PortfolioPositionResponseData, PortfolioResponseData } from '@/types/generated'
 
 const route = useRoute()
@@ -113,10 +125,6 @@ const resolveErrorMessage = (error: unknown, fallbackMessage: string): string =>
 	}
 
 	return error instanceof Error ? error.message : fallbackMessage
-}
-
-const formatDecimal = (value: number): string => {
-	return value.toFixed(2)
 }
 
 onMounted(async () => {

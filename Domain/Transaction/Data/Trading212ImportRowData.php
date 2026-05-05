@@ -9,6 +9,7 @@ class Trading212ImportRowData extends Data
 {
    public function __construct(
       public ?Trading212TransactionType $action,
+      public ?string $time,
       public ?string $isin,
       public ?string $ticker,
       public ?string $name,
@@ -27,6 +28,7 @@ class Trading212ImportRowData extends Data
 
       return new self(
          action: $action === null ? null : Trading212TransactionType::tryFrom($action),
+         time: self::normalizeNullableString($row[1] ?? null),
          isin: self::normalizeNullableString($row[2] ?? null),
          ticker: self::normalizeNullableString($row[3] ?? null),
          name: self::normalizeNullableString($row[4] ?? null),

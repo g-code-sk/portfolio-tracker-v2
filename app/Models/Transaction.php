@@ -16,9 +16,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'number_of_shares',
     'price_per_share',
     'currency_id',
+    'executed_at',
 ])]
 class Transaction extends Model
 {
+    protected function casts(): array
+    {
+        return [
+            'executed_at' => 'date',
+        ];
+    }
+
     public function scopePortfolioPositionMetrics(Builder $query, int $portfolioId): Builder
     {
         return $query
@@ -29,6 +37,7 @@ class Transaction extends Model
             ->selectRaw(
                 '
                 transactions.security_id as security_id,
+                transactions.currency_id as currency_id,
                 securities.ticker as ticker,
                 securities.name as name,
                 currencies.symbol as currency,

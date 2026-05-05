@@ -12,12 +12,19 @@ class TypeScriptTransformerServiceProvider extends BaseTypeScriptTransformerServ
 {
     protected function configure(TypeScriptTransformerConfigFactory $config): void
     {
+        $directoriesToTransform = [
+            base_path('Domain'),
+        ];
+
+        if (is_dir(app_path('Data'))) {
+            $directoriesToTransform[] = app_path('Data');
+        }
+
         $config
             ->outputDirectory(base_path('frontend/src/types'))
             ->transformer(AttributedClassTransformer::class)
             ->transformer(EnumTransformer::class)
-            ->transformDirectories(app_path('Data'))
-            ->transformDirectories(base_path('Domain'))
+            ->transformDirectories(...$directoriesToTransform)
             ->writer(new FlatModuleWriter('generated.ts'));
     }
 }

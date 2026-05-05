@@ -20,6 +20,7 @@ return new class extends Migration
          $table->decimal('number_of_shares', 20, 10);
          $table->decimal('price_per_share', 20, 10);
          $table->foreignId('currency_id')->constrained('currencies');
+         $table->date('executed_at');
          $table->timestamps();
 
          $table->unique(['external_transaction_id']);
