@@ -11,31 +11,6 @@ use Maatwebsite\Excel\Facades\Excel;
 class ParseTrading212CsvAction
 {
     /**
-     * @var array<int, string>
-     */
-    private const EXPECTED_HEADERS = [
-        'Action',
-        'Time',
-        'ISIN',
-        'Ticker',
-        'Name',
-        'Notes',
-        'ID',
-        'No. of shares',
-        'Price / share',
-        'Currency (Price / share)',
-        'Exchange rate',
-        'Result',
-        'Currency (Result)',
-        'Total',
-        'Currency (Total)',
-        'Withholding tax',
-        'Currency (Withholding tax)',
-        'Currency conversion fee',
-        'Currency (Currency conversion fee)',
-    ];
-
-    /**
      * @return Collection<int, Trading212ImportRowData>
      */
     public function execute(string $storedFilePath): Collection
@@ -56,20 +31,56 @@ class ParseTrading212CsvAction
         }
 
         $headerRow = $this->normalizeRow($sheetRows->first());
+        $headerIndexMap = $this->buildHeaderIndexMap($headerRow);
 
-        if ($headerRow !== self::EXPECTED_HEADERS) {
-            throw ValidationException::withMessages([
-                'file' => ['The uploaded file is not a valid Trading 212 export format.'],
-            ]);
-        }
+        $this->validateRequiredHeaders($headerIndexMap);
 
         return $sheetRows
             ->slice(1)
             ->values()
             ->map(fn (mixed $row): array => $this->normalizeRow($row))
             ->filter(fn (array $row): bool => $this->hasRowAnyValue($row))
-            ->map(fn (array $row): Trading212ImportRowData => Trading212ImportRowData::fromCsvRow($row))
+            ->map(fn (array $row): Trading212ImportRowData => Trading212ImportRowData::fromHeaderMappedRow($row, $headerIndexMap))
             ->values();
+    }
+
+    /**
+     * @param  array<int, string>  $headerRow
+     * @return array<string, int> normalized header label => first column index
+     */
+    private function buildHeaderIndexMap(array $headerRow): array
+    {
+        $map = [];
+
+        foreach ($headerRow as $index => $label) {
+            if (! array_key_exists($label, $map)) {
+                $map[$label] = $index;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param  array<string, int>  $headerIndexMap
+     */
+    private function validateRequiredHeaders(array $headerIndexMap): void
+    {
+        $missing = [];
+
+        foreach (Trading212ImportRowData::REQUIRED_HEADERS as $required) {
+            if (! array_key_exists($required, $headerIndexMap)) {
+                $missing[] = $required;
+            }
+        }
+
+        if ($missing === []) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'file' => ['The uploaded file is missing required columns: '.implode(', ', $missing).'.'],
+        ]);
     }
 
     /**
