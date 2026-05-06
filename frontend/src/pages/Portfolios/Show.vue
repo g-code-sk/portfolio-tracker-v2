@@ -1,7 +1,7 @@
 <template>
 	<v-main class="bg-grey-lighten-5">
 		<v-container class="py-8">
-			<v-btn class="mb-4" variant="text" prepend-icon="mdi-arrow-left" :to="{ name: 'portfolios' }"> Back to Portfolios </v-btn>
+			<AppBreadcrumbs :items="breadcrumbItems" />
 
 			<v-row v-if="isLoadingPortfolio">
 				<v-col cols="12" class="d-flex justify-center py-10">
@@ -53,7 +53,7 @@
 												:to="{
 													name: 'portfolio-position-transactions',
 													params: { portfolioId, securityId: position.securityId },
-													query: { currencyId: position.currencyId, ticker: position.ticker },
+													query: { currencyId: position.currencyId },
 												}"
 											>
 												{{ position.ticker }}
@@ -75,7 +75,11 @@
 														variant="text"
 														density="compact"
 														aria-label="Buy splits by whole share"
-														@click="openWholeShareSegmentsDialog(position)"
+														:to="{
+															name: 'portfolio-position-whole-share-buy-segments',
+															params: { portfolioId, securityId: position.securityId },
+															query: { currencyId: position.currencyId },
+														}"
 													>
 														<v-icon>mdi-view-split-vertical</v-icon>
 													</v-btn>
@@ -88,7 +92,6 @@
 						</v-card>
 					</v-col>
 				</v-row>
-				<WholeShareBuySegmentsDialog v-model="isWholeShareSegmentsDialogOpen" :portfolio-id="portfolio.id" :position="wholeShareSegmentsDialogPosition" />
 			</template>
 		</v-container>
 	</v-main>
@@ -100,7 +103,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue3-toastify'
 import PortfolioImportAction from './Components/PortfolioImportAction.vue'
-import WholeShareBuySegmentsDialog from './Components/WholeShareBuySegmentsDialog.vue'
+import AppBreadcrumbs, { type AppBreadcrumbItem } from '@/components/AppBreadcrumbs.vue'
 import AppLink from '@/components/AppLink.vue'
 import { fetchPortfolio, fetchPortfolioPositions } from '@/services/portfolio'
 import { formatDecimal } from '@/format/number'
@@ -114,13 +117,10 @@ const isLoadingPositions = ref(false)
 
 const portfolioId = computed(() => Number(route.params.portfolioId))
 
-const isWholeShareSegmentsDialogOpen = ref(false)
-const wholeShareSegmentsDialogPosition = ref<PortfolioPositionResponseData | null>(null)
-
-const openWholeShareSegmentsDialog = (position: PortfolioPositionResponseData): void => {
-	wholeShareSegmentsDialogPosition.value = position
-	isWholeShareSegmentsDialogOpen.value = true
-}
+const breadcrumbItems = computed<AppBreadcrumbItem[]>(() => [
+	{ title: 'Portfolios', to: { name: 'portfolios' } },
+	{ title: portfolio.value?.name ?? 'Portfolio', disabled: true },
+])
 
 const loadPortfolio = async (): Promise<void> => {
 	isLoadingPortfolio.value = true

@@ -3,18 +3,16 @@
 namespace Domain\Transaction\Action;
 
 use App\Models\Transaction;
-use Carbon\CarbonImmutable;
 use Domain\Transaction\Data\WholeShareBucketResponseData;
 use Domain\Transaction\Data\WholeShareGroupResponseData;
 use Domain\Transaction\Data\WholeShareGroupsResponseData;
 use Domain\Transaction\Data\WholeShareSegmentResponseData;
 use Domain\Transaction\Enums\TransactionTypeCode;
+use Domain\Transaction\WholeShareBucketEpsilon;
 use Illuminate\Support\Collection;
 
 class SplitTransactionsAtWholeShareBoundariesAction
 {
-    private const float BUCKET_EPSILON = 1e-9;
-
     /**
      * @param  Collection<int, Transaction>  $transactionsAscending
      */
@@ -23,7 +21,9 @@ class SplitTransactionsAtWholeShareBoundariesAction
         $groups = [];
         $globalGroupIndex = 0;
 
-        foreach ($this->partitionIntoPositionCycles($transactionsAscending) as $cycleTransactions) {
+        $cycles = $this->partitionIntoPositionCycles($transactionsAscending);
+
+        foreach ($cycles as $cycleTransactions) {
             $buyTransactions = $cycleTransactions
                 ->filter(fn (Transaction $transaction): bool => $transaction->type->code === TransactionTypeCode::Buy)
                 ->values();
@@ -46,32 +46,8 @@ class SplitTransactionsAtWholeShareBoundariesAction
             foreach ($groupIndices as $groupIndex) {
                 $buyBucket = $buyBuckets[$groupIndex] ?? null;
                 $sellBucket = $sellBuckets[$groupIndex] ?? null;
-                $buyDate = $this->resolveMaxExecutedAt($buyBucket);
-                $sellDate = $this->resolveMinExecutedAt($sellBucket);
-                $holdPeriodDays = null;
-                $weightedBuyPricePerShare = $this->resolveWeightedPricePerShare($buyBucket);
-                $weightedSellPricePerShare = $this->resolveWeightedPricePerShare($sellBucket);
-                $yieldPercent = $this->resolveYieldPercent($weightedBuyPricePerShare, $weightedSellPricePerShare);
-                $yieldAmount = $this->resolveYieldAmount($buyBucket, $sellBucket);
-                $isSellTaxable = $this->resolveIsSellTaxable($buyDate, $sellDate);
 
-                if ($buyDate !== null && $sellDate !== null) {
-                    $holdPeriodDays = (int) CarbonImmutable::parse($buyDate)->startOfDay()->diffInDays(CarbonImmutable::parse($sellDate)->startOfDay(), false);
-                }
-
-                $groups[] = new WholeShareGroupResponseData(
-                    groupIndex: $globalGroupIndex,
-                    buyBucket: $buyBucket,
-                    sellBucket: $sellBucket,
-                    buyDate: $buyDate,
-                    sellDate: $sellDate,
-                    holdPeriodDays: $holdPeriodDays,
-                    weightedBuyPricePerShare: $weightedBuyPricePerShare,
-                    weightedSellPricePerShare: $weightedSellPricePerShare,
-                    yieldPercent: $yieldPercent,
-                    yieldAmount: $yieldAmount,
-                    isSellTaxable: $isSellTaxable,
-                );
+                $groups[] = WholeShareGroupResponseData::fromBuckets($globalGroupIndex, $buyBucket, $sellBucket);
 
                 $globalGroupIndex++;
             }
@@ -81,6 +57,9 @@ class SplitTransactionsAtWholeShareBoundariesAction
     }
 
     /**
+     * Partition the transactions into position cycles - a cycle means
+     * that the position was opened and closed within the same cycle (all shares sold)
+     *
      * @param  Collection<int, Transaction>  $transactionsAscending
      * @return list<Collection<int, Transaction>>
      */
@@ -94,7 +73,7 @@ class SplitTransactionsAtWholeShareBoundariesAction
         foreach ($transactionsAscending as $transaction) {
             $shares = (float) $transaction->number_of_shares;
 
-            if ($shares <= self::BUCKET_EPSILON) {
+            if ($shares <= WholeShareBucketEpsilon::VALUE) {
                 continue;
             }
 
@@ -131,7 +110,7 @@ class SplitTransactionsAtWholeShareBoundariesAction
 
     private function isApproximatelyZero(float $value): bool
     {
-        return abs($value) <= self::BUCKET_EPSILON;
+        return abs($value) <= WholeShareBucketEpsilon::VALUE;
     }
 
     /**
@@ -148,14 +127,14 @@ class SplitTransactionsAtWholeShareBoundariesAction
         foreach ($transactionsAscending as $transaction) {
             $transactionShareCount = (float) $transaction->number_of_shares;
 
-            if ($transactionShareCount <= self::BUCKET_EPSILON) {
+            if ($transactionShareCount <= WholeShareBucketEpsilon::VALUE) {
                 continue;
             }
 
             $transactionAmount = $transactionShareCount * (float) $transaction->price_per_share;
             $remainingShareCount = $transactionShareCount;
 
-            while ($remainingShareCount > self::BUCKET_EPSILON) {
+            while ($remainingShareCount > WholeShareBucketEpsilon::VALUE) {
                 $roomInBucket = 1.0 - $bucketFill;
                 $take = min($remainingShareCount, $roomInBucket);
                 $sliceTotalAmount = $transactionAmount * ($take / $transactionShareCount);
@@ -178,7 +157,7 @@ class SplitTransactionsAtWholeShareBoundariesAction
                 $bucketFill += $take;
                 $remainingShareCount -= $take;
 
-                if ($bucketFill >= 1.0 - self::BUCKET_EPSILON) {
+                if ($bucketFill >= 1.0 - WholeShareBucketEpsilon::VALUE) {
                     $bucketFill = 0.0;
                     $bucketIndex++;
                 }
@@ -197,94 +176,5 @@ class SplitTransactionsAtWholeShareBoundariesAction
         }
 
         return $buckets;
-    }
-
-    private function resolveMaxExecutedAt(?WholeShareBucketResponseData $bucket): ?string
-    {
-        if ($bucket === null || $bucket->segments === []) {
-            return null;
-        }
-
-        return collect($bucket->segments)
-            ->map(fn (WholeShareSegmentResponseData $segment): string => $segment->executedAt)
-            ->max();
-    }
-
-    private function resolveMinExecutedAt(?WholeShareBucketResponseData $bucket): ?string
-    {
-        if ($bucket === null || $bucket->segments === []) {
-            return null;
-        }
-
-        return collect($bucket->segments)
-            ->map(fn (WholeShareSegmentResponseData $segment): string => $segment->executedAt)
-            ->min();
-    }
-
-    private function resolveWeightedPricePerShare(?WholeShareBucketResponseData $bucket): ?float
-    {
-        if ($bucket === null || $bucket->segments === []) {
-            return null;
-        }
-
-        $totalShares = collect($bucket->segments)
-            ->sum(fn (WholeShareSegmentResponseData $segment): float => $segment->numberOfShares);
-
-        if ($totalShares <= self::BUCKET_EPSILON) {
-            return null;
-        }
-
-        $totalAmount = collect($bucket->segments)
-            ->sum(fn (WholeShareSegmentResponseData $segment): float => $segment->numberOfShares * $segment->pricePerShare);
-
-        return $totalAmount / $totalShares;
-    }
-
-    private function resolveYieldPercent(?float $weightedBuyPricePerShare, ?float $weightedSellPricePerShare): ?float
-    {
-        if ($weightedBuyPricePerShare === null || $weightedSellPricePerShare === null) {
-            return null;
-        }
-
-        if ($weightedBuyPricePerShare <= 0.0) {
-            return null;
-        }
-
-        return (($weightedSellPricePerShare - $weightedBuyPricePerShare) / $weightedBuyPricePerShare) * 100;
-    }
-
-    private function resolveYieldAmount(?WholeShareBucketResponseData $buyBucket, ?WholeShareBucketResponseData $sellBucket): ?float
-    {
-        if ($buyBucket === null || $sellBucket === null) {
-            return null;
-        }
-
-        if ($buyBucket->segments === [] || $sellBucket->segments === []) {
-            return null;
-        }
-
-        $buyTotalAmount = collect($buyBucket->segments)
-            ->sum(fn (WholeShareSegmentResponseData $segment): float => $segment->totalAmount);
-        $sellTotalAmount = collect($sellBucket->segments)
-            ->sum(fn (WholeShareSegmentResponseData $segment): float => $segment->totalAmount);
-
-        return $sellTotalAmount - $buyTotalAmount;
-    }
-
-    private function resolveIsSellTaxable(?string $buyDate, ?string $sellDate): ?bool
-    {
-        if ($buyDate === null) {
-            return null;
-        }
-
-        $buyDateValue = CarbonImmutable::parse($buyDate)->startOfDay();
-
-        $effectiveSellDate = $sellDate !== null
-            ? CarbonImmutable::parse($sellDate)->startOfDay()
-            : CarbonImmutable::now()->startOfDay();
-
-        $taxFreeFromDate = $buyDateValue->addYear()->addDay();
-
-        return $effectiveSellDate->lt($taxFreeFromDate);
     }
 }
