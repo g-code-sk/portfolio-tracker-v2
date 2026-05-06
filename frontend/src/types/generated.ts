@@ -73,11 +73,19 @@ export type TransactionImportTypesResponseData = {
 importTypes: string[],
 };
 export type TransactionTypeCode = "buy" | "sell";
-export type WholeShareBuyBucketResponseData = {
+export type WholeShareBucketResponseData = {
 wholeShareBucketIndex: number,
 segments: Array<any>,
 };
-export type WholeShareBuySegmentResponseData = {
+export type WholeShareGroupResponseData = {
+groupIndex: number,
+buyBucket: WholeShareBucketResponseData | null,
+sellBucket: WholeShareBucketResponseData | null,
+buyCompletedAt: string | null,
+soldAt: string | null,
+daysToSell: number | null,
+};
+export type WholeShareSegmentResponseData = {
 sourceTransactionId: number,
 externalTransactionId: string,
 executedAt: string,
@@ -88,6 +96,6 @@ pricePerShare: number,
 totalAmount: number,
 currencySymbol: string,
 };
-export type WholeShareBuySegmentsResponseData = {
-buckets: Array<any>,
+export type WholeShareSegmentsResponseData = {
+groups: Array<any>,
 };

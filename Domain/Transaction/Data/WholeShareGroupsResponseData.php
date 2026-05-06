@@ -7,10 +7,10 @@ use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
-class WholeShareBuySegmentsResponseData extends Data
+class WholeShareGroupsResponseData extends Data
 {
     public function __construct(
-        #[DataCollectionOf(WholeShareBuyBucketResponseData::class)]
-        public array $buckets,
+        #[DataCollectionOf(WholeShareGroupResponseData::class)]
+        public array $groups,
     ) {}
 }

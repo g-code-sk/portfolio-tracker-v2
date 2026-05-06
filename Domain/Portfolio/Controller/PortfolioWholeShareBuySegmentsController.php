@@ -7,7 +7,7 @@ use App\Models\Portfolio;
 use App\Models\Transaction;
 use App\Services\ApiResponseService;
 use Domain\Portfolio\Data\PortfolioWholeShareBuySegmentsQueryData;
-use Domain\Transaction\Action\SplitBuyTransactionsAtWholeShareBoundariesAction;
+use Domain\Transaction\Action\SplitTransactionsAtWholeShareBoundariesAction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,7 +17,7 @@ class PortfolioWholeShareBuySegmentsController extends Controller
     public function __invoke(
         Portfolio $portfolio,
         PortfolioWholeShareBuySegmentsQueryData $queryData,
-        SplitBuyTransactionsAtWholeShareBoundariesAction $splitBuyTransactionsAtWholeShareBoundaries,
+        SplitTransactionsAtWholeShareBoundariesAction $splitTransactionsAtWholeShareBoundaries,
         ApiResponseService $apiResponse
     ): JsonResponse {
         Gate::authorize('view', $portfolio);
@@ -31,10 +31,10 @@ class PortfolioWholeShareBuySegmentsController extends Controller
             ->orderBy('id')
             ->get();
 
-        $data = $splitBuyTransactionsAtWholeShareBoundaries->execute($transactions);
+        $data = $splitTransactionsAtWholeShareBoundaries->execute($transactions);
 
         return $apiResponse->make(
-            message: 'Whole share buy segments fetched successfully.',
+            message: 'Whole share segments fetched successfully.',
             status: Response::HTTP_OK,
             data: $data,
         );

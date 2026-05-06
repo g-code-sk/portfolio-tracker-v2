@@ -1,51 +1,87 @@
 <template>
 	<AppDialog v-model="isDialogOpen" :size="920" close-text="Close">
-		<template #title> Buy splits by whole share{{ titleTicker }} </template>
+		<template #title> Whole share buy/sell groups{{ titleTicker }} </template>
 
 		<template #body>
 			<v-progress-linear v-if="isLoadingSegments" class="mb-4" color="primary" height="6" indeterminate />
 
 			<div v-else-if="!effectivePosition" class="text-medium-emphasis">No position selected.</div>
 
-			<div v-else-if="effectivePosition && !didWholeShareSegmentsRequestFail && wholeShareBuckets.length === 0" class="text-medium-emphasis py-4 text-center">
-				No buy transactions to split for this position.
+			<div v-else-if="effectivePosition && !didWholeShareSegmentsRequestFail && wholeShareGroups.length === 0" class="text-medium-emphasis py-4 text-center">
+				No buy or sell transactions to split for this position.
 			</div>
 
-			<div v-else-if="effectivePosition && !didWholeShareSegmentsRequestFail" class="d-flex flex-column ga-4">
-				<v-card v-for="bucket in wholeShareBuckets" :key="bucket.wholeShareBucketIndex" variant="outlined" rounded="lg">
-					<v-card-title class="text-subtitle-1">
-						Whole share {{ bucket.wholeShareBucketIndex + 1 }}
-						<span class="text-medium-emphasis font-weight-regular"> · {{ formatDecimal(sumBucketShares(bucket)) }} shares toward 1.0</span>
-					</v-card-title>
-					<v-divider />
-					<v-table density="compact">
-						<thead>
-							<tr>
-								<th class="text-left">Date</th>
-								<th class="text-left">Transaction id</th>
-								<th class="text-left">External id</th>
-								<th class="text-right">Shares</th>
-								<th class="text-right">Price / share</th>
-								<th class="text-right">Total</th>
-								<th class="text-left">Currency</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr
-								v-for="(segment, segmentIndex) in narrowSegments(bucket)"
-								:key="`${bucket.wholeShareBucketIndex}-${segmentIndex}-${segment.sourceTransactionId}`"
-							>
-								<td>{{ formatDate(segment.executedAt) }}</td>
-								<td>{{ segment.sourceTransactionId }}</td>
-								<td>{{ segment.externalTransactionId }}</td>
-								<td class="text-right">{{ formatDecimal(segment.numberOfShares) }}</td>
-								<td class="text-right">{{ formatDecimal(segment.pricePerShare) }}</td>
-								<td class="text-right">{{ formatDecimal(segment.totalAmount) }}</td>
-								<td>{{ segment.currencySymbol }}</td>
-							</tr>
-						</tbody>
-					</v-table>
-				</v-card>
+			<div v-else-if="effectivePosition && !didWholeShareSegmentsRequestFail">
+				<v-data-table :headers="groupHeaders" :items="wholeShareGroups" item-value="groupIndex" show-expand density="comfortable">
+					<template #item.groupIndex="{ item }">Whole share group {{ item.groupIndex + 1 }}</template>
+					<template #item.buyCompletedAt="{ item }">{{ formatDateValue(item.buyCompletedAt) }}</template>
+					<template #item.soldAt="{ item }">{{ formatDateValue(item.soldAt) }}</template>
+					<template #item.daysToSell="{ item }">{{ formatDaysToSell(item.daysToSell) }}</template>
+
+					<template #expanded-row="{ columns, item }">
+						<tr>
+							<td :colspan="columns.length" class="bg-surface">
+								<div class="pa-4">
+									<v-row>
+										<v-col cols="12" md="6">
+											<v-card variant="outlined" rounded="lg">
+												<v-card-title class="text-subtitle-2">Buys · {{ formatDecimal(sumBucketShares(item.buyBucket)) }} of 1.0</v-card-title>
+												<v-divider />
+												<v-card-text class="py-2">
+													<div v-if="narrowSegments(item.buyBucket).length === 0" class="text-medium-emphasis">No buy segments in this group.</div>
+													<div v-else class="timeline-scroll">
+														<v-timeline density="compact" side="end" truncate-line="both">
+															<v-timeline-item
+																v-for="(segment, segmentIndex) in narrowSegments(item.buyBucket)"
+																:key="`buy-${item.groupIndex}-${segmentIndex}-${segment.sourceTransactionId}`"
+																dot-color="success"
+																size="small"
+															>
+																<div class="text-body-2">{{ formatDate(segment.executedAt) }} · #{{ segment.sourceTransactionId }}</div>
+																<div class="text-body-2">
+																	{{ formatDecimal(segment.numberOfShares) }} shares @ {{ formatDecimal(segment.pricePerShare) }} ·
+																	{{ formatDecimal(segment.totalAmount) }} {{ segment.currencySymbol }}
+																</div>
+																<div class="text-caption text-medium-emphasis">External: {{ segment.externalTransactionId }}</div>
+															</v-timeline-item>
+														</v-timeline>
+													</div>
+												</v-card-text>
+											</v-card>
+										</v-col>
+
+										<v-col cols="12" md="6">
+											<v-card variant="outlined" rounded="lg">
+												<v-card-title class="text-subtitle-2">Sells · {{ formatDecimal(sumBucketShares(item.sellBucket)) }} of 1.0</v-card-title>
+												<v-divider />
+												<v-card-text class="py-2">
+													<div v-if="narrowSegments(item.sellBucket).length === 0" class="text-medium-emphasis">No sell segments in this group.</div>
+													<div v-else class="timeline-scroll">
+														<v-timeline density="compact" side="end" truncate-line="both">
+															<v-timeline-item
+																v-for="(segment, segmentIndex) in narrowSegments(item.sellBucket)"
+																:key="`sell-${item.groupIndex}-${segmentIndex}-${segment.sourceTransactionId}`"
+																dot-color="error"
+																size="small"
+															>
+																<div class="text-body-2">{{ formatDate(segment.executedAt) }} · #{{ segment.sourceTransactionId }}</div>
+																<div class="text-body-2">
+																	{{ formatDecimal(segment.numberOfShares) }} shares @ {{ formatDecimal(segment.pricePerShare) }} ·
+																	{{ formatDecimal(segment.totalAmount) }} {{ segment.currencySymbol }}
+																</div>
+																<div class="text-caption text-medium-emphasis">External: {{ segment.externalTransactionId }}</div>
+															</v-timeline-item>
+														</v-timeline>
+													</div>
+												</v-card-text>
+											</v-card>
+										</v-col>
+									</v-row>
+								</div>
+							</td>
+						</tr>
+					</template>
+				</v-data-table>
 			</div>
 		</template>
 	</AppDialog>
@@ -57,8 +93,8 @@ import { toast } from 'vue3-toastify'
 import AppDialog from '@/components/AppDialog.vue'
 import { formatDate } from '@/format/date'
 import { formatDecimal } from '@/format/number'
-import { fetchWholeShareBuySegments } from '@/services/transaction'
-import type { PortfolioPositionResponseData, WholeShareBuyBucketResponseData, WholeShareBuySegmentResponseData } from '@/types/generated'
+import { fetchWholeShareSegments } from '@/services/transaction'
+import type { PortfolioPositionResponseData, WholeShareBucketResponseData, WholeShareGroupResponseData, WholeShareSegmentResponseData } from '@/types/generated'
 
 const props = defineProps<{
 	portfolioId: number
@@ -67,23 +103,41 @@ const props = defineProps<{
 
 const isDialogOpen = defineModel<boolean>({ required: true })
 
-const wholeShareBuckets = ref<WholeShareBuyBucketResponseData[]>([])
+const wholeShareGroups = ref<WholeShareGroupResponseData[]>([])
 const isLoadingSegments = ref(false)
 const didWholeShareSegmentsRequestFail = ref(false)
 
 const effectivePosition = computed(() => props.position)
+const groupHeaders = [
+	{ title: 'Group', key: 'groupIndex' },
+	{ title: 'Buy completed', key: 'buyCompletedAt' },
+	{ title: 'Sold at', key: 'soldAt' },
+	{ title: 'Days to sell', key: 'daysToSell' },
+]
 
 const titleTicker = computed(() => {
 	const ticker = effectivePosition.value?.ticker
 	return ticker ? ` — ${ticker}` : ''
 })
 
-const narrowSegments = (bucket: WholeShareBuyBucketResponseData): WholeShareBuySegmentResponseData[] => {
-	return bucket.segments as WholeShareBuySegmentResponseData[]
+const narrowSegments = (bucket: WholeShareBucketResponseData | null): WholeShareSegmentResponseData[] => {
+	if (!bucket) {
+		return []
+	}
+
+	return bucket.segments as WholeShareSegmentResponseData[]
 }
 
-const sumBucketShares = (bucket: WholeShareBuyBucketResponseData): number => {
+const sumBucketShares = (bucket: WholeShareBucketResponseData | null): number => {
 	return narrowSegments(bucket).reduce((sum, segment) => sum + segment.numberOfShares, 0)
+}
+
+const formatDateValue = (value: string | null): string => {
+	return value ? formatDate(value) : '—'
+}
+
+const formatDaysToSell = (value: number | null): string => {
+	return value === null ? '—' : `${value}`
 }
 
 const loadWholeShareSegments = async (): Promise<void> => {
@@ -96,12 +150,12 @@ const loadWholeShareSegments = async (): Promise<void> => {
 	didWholeShareSegmentsRequestFail.value = false
 
 	try {
-		const data = await fetchWholeShareBuySegments(props.portfolioId, position.securityId, position.currencyId)
-		wholeShareBuckets.value = data.buckets as WholeShareBuyBucketResponseData[]
+		const data = await fetchWholeShareSegments(props.portfolioId, position.securityId, position.currencyId)
+		wholeShareGroups.value = data.groups as WholeShareGroupResponseData[]
 	} catch (error) {
-		console.error('Whole share buy segments fetch failed', error)
-		toast.error('Something went wrong when loading whole share buy splits.')
-		wholeShareBuckets.value = []
+		console.error('Whole share segments fetch failed', error)
+		toast.error('Something went wrong when loading whole share groups.')
+		wholeShareGroups.value = []
 		didWholeShareSegmentsRequestFail.value = true
 	} finally {
 		isLoadingSegments.value = false
@@ -119,3 +173,10 @@ watch(
 	},
 )
 </script>
+
+<style scoped>
+.timeline-scroll {
+	max-height: 260px;
+	overflow-y: auto;
+}
+</style>
