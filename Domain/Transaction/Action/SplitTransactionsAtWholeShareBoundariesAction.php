@@ -8,6 +8,7 @@ use Domain\Transaction\Data\WholeShareGroupResponseData;
 use Domain\Transaction\Data\WholeShareGroupsResponseData;
 use Domain\Transaction\Data\WholeShareSegmentResponseData;
 use Domain\Transaction\Enums\TransactionTypeCode;
+use Domain\Transaction\Services\TransactionPositionCyclePartitionerService;
 use Domain\Transaction\WholeShareBucketEpsilon;
 use Illuminate\Support\Collection;
 
@@ -21,7 +22,7 @@ class SplitTransactionsAtWholeShareBoundariesAction
         $groups = [];
         $globalGroupIndex = 0;
 
-        $cycles = $this->partitionIntoPositionCycles($transactionsAscending);
+        $cycles = TransactionPositionCyclePartitionerService::partition($transactionsAscending);
 
         foreach ($cycles as $cycleTransactions) {
             $buyTransactions = $cycleTransactions
@@ -54,63 +55,6 @@ class SplitTransactionsAtWholeShareBoundariesAction
         }
 
         return new WholeShareGroupsResponseData(groups: $groups);
-    }
-
-    /**
-     * Partition the transactions into position cycles - a cycle means
-     * that the position was opened and closed within the same cycle (all shares sold)
-     *
-     * @param  Collection<int, Transaction>  $transactionsAscending
-     * @return list<Collection<int, Transaction>>
-     */
-    private function partitionIntoPositionCycles(Collection $transactionsAscending): array
-    {
-        /** @var list<Collection<int, Transaction>> $cycles */
-        $cycles = [];
-        $runningShares = 0.0;
-        $currentCycleTransactions = collect();
-
-        foreach ($transactionsAscending as $transaction) {
-            $shares = (float) $transaction->number_of_shares;
-
-            if ($shares <= WholeShareBucketEpsilon::VALUE) {
-                continue;
-            }
-
-            if ($transaction->type->code === TransactionTypeCode::Buy) {
-                if ($this->isApproximatelyZero($runningShares) && $currentCycleTransactions->isNotEmpty()) {
-                    $cycles[] = $currentCycleTransactions->values();
-                    $currentCycleTransactions = collect();
-                }
-
-                $currentCycleTransactions->push($transaction);
-                $runningShares += $shares;
-
-                continue;
-            }
-
-            if ($transaction->type->code === TransactionTypeCode::Sell) {
-                $currentCycleTransactions->push($transaction);
-                $runningShares -= $shares;
-
-                if ($this->isApproximatelyZero($runningShares)) {
-                    $runningShares = 0.0;
-                    $cycles[] = $currentCycleTransactions->values();
-                    $currentCycleTransactions = collect();
-                }
-            }
-        }
-
-        if ($currentCycleTransactions->isNotEmpty()) {
-            $cycles[] = $currentCycleTransactions->values();
-        }
-
-        return $cycles;
-    }
-
-    private function isApproximatelyZero(float $value): bool
-    {
-        return abs($value) <= WholeShareBucketEpsilon::VALUE;
     }
 
     /**
