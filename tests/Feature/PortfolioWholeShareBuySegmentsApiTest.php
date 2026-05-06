@@ -134,11 +134,11 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
             ->assertJsonCount(2, 'data.groups')
             ->assertJsonPath('data.groups.0.groupIndex', 0)
             ->assertJsonPath('data.groups.1.groupIndex', 1)
-            ->assertJsonPath('data.groups.0.buyDate', '2022-01-02')
-            ->assertJsonPath('data.groups.0.sellDate', '2022-01-10')
+            ->assertJsonPath('data.groups.0.buyDate', '2022-01-02T00:00:00+00:00')
+            ->assertJsonPath('data.groups.0.sellDate', '2022-01-10T00:00:00+00:00')
             ->assertJsonPath('data.groups.0.holdPeriodDays', 8)
-            ->assertJsonPath('data.groups.1.buyDate', '2022-01-05')
-            ->assertJsonPath('data.groups.1.sellDate', '2022-01-20')
+            ->assertJsonPath('data.groups.1.buyDate', '2022-01-05T00:00:00+00:00')
+            ->assertJsonPath('data.groups.1.sellDate', '2022-01-20T00:00:00+00:00')
             ->assertJsonPath('data.groups.1.holdPeriodDays', 15)
             ->assertJsonPath('data.groups.0.weightedBuyPricePerShare', 12)
             ->assertJsonPath('data.groups.0.weightedSellPricePerShare', 18)
@@ -183,7 +183,7 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
             ->assertJsonCount(1, 'data.groups')
             ->assertJsonPath('data.groups.0.groupIndex', 0)
             ->assertJsonPath('data.groups.0.buyBucket', null)
-            ->assertJsonPath('data.groups.0.sellDate', '2022-06-01')
+            ->assertJsonPath('data.groups.0.sellDate', '2022-06-01T00:00:00+00:00')
             ->assertJsonPath('data.groups.0.buyDate', null)
             ->assertJsonPath('data.groups.0.holdPeriodDays', null)
             ->assertJsonPath('data.groups.0.weightedBuyPricePerShare', null)
@@ -220,7 +220,7 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
             );
 
             $beforeThresholdResponse->assertOk()
-                ->assertJsonPath('data.groups.0.buyDate', '2024-01-10')
+                ->assertJsonPath('data.groups.0.buyDate', '2024-01-10T00:00:00+00:00')
                 ->assertJsonPath('data.groups.0.sellDate', null)
                 ->assertJsonPath('data.groups.0.holdPeriodDays', null)
                 ->assertJsonPath('data.groups.0.isSellTaxable', true);
@@ -232,7 +232,7 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
             );
 
             $onThresholdResponse->assertOk()
-                ->assertJsonPath('data.groups.0.buyDate', '2024-01-10')
+                ->assertJsonPath('data.groups.0.buyDate', '2024-01-10T00:00:00+00:00')
                 ->assertJsonPath('data.groups.0.sellDate', null)
                 ->assertJsonPath('data.groups.0.holdPeriodDays', null)
                 ->assertJsonPath('data.groups.0.isSellTaxable', false);
@@ -339,12 +339,12 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
             $response->assertOk()
                 ->assertJsonCount(2, 'data.groups')
                 ->assertJsonPath('data.groups.0.groupIndex', 0)
-                ->assertJsonPath('data.groups.0.buyDate', '2022-09-01')
-                ->assertJsonPath('data.groups.0.sellDate', '2024-02-16')
+                ->assertJsonPath('data.groups.0.buyDate', '2022-09-01T00:00:00+00:00')
+                ->assertJsonPath('data.groups.0.sellDate', '2024-02-16T00:00:00+00:00')
                 ->assertJsonPath('data.groups.0.holdPeriodDays', 533)
                 ->assertJsonPath('data.groups.0.isSellTaxable', false)
                 ->assertJsonPath('data.groups.1.groupIndex', 1)
-                ->assertJsonPath('data.groups.1.buyDate', '2025-04-25')
+                ->assertJsonPath('data.groups.1.buyDate', '2025-04-25T00:00:00+00:00')
                 ->assertJsonPath('data.groups.1.sellDate', null)
                 ->assertJsonPath('data.groups.1.holdPeriodDays', null)
                 ->assertJsonPath('data.groups.1.weightedBuyPricePerShare', 162.25)

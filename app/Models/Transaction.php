@@ -23,7 +23,7 @@ class Transaction extends Model
     protected function casts(): array
     {
         return [
-            'executed_at' => 'date',
+            'executed_at' => 'datetime',
         ];
     }
 

@@ -29,7 +29,7 @@
 
 						<v-data-table v-else :headers="headers" :items="transactions">
 							<template #item.executedAt="{ item }">
-								{{ formatDate(item.executedAt) }}
+								<span :title="formatDateTime(item.executedAt)">{{ formatDate(item.executedAt) }}</span>
 							</template>
 							<template #item.numberOfShares="{ item }">
 								<span class="d-flex justify-end">{{ formatDecimal(item.numberOfShares) }}</span>
@@ -54,7 +54,7 @@ import { useRoute } from 'vue-router'
 import { toast } from 'vue3-toastify'
 import { fetchPositionTransactions } from '@/services/transaction'
 import { formatDecimal } from '@/format/number'
-import { formatDate } from '@/format/date'
+import { formatDate, formatDateTime } from '@/format/date'
 import type { PortfolioTransactionResponseData } from '@/types/generated'
 
 const route = useRoute()

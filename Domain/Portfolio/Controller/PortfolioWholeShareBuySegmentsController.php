@@ -28,7 +28,6 @@ class PortfolioWholeShareBuySegmentsController extends Controller
             ->where('currency_id', $queryData->currencyId)
             ->with(['security', 'currency', 'type'])
             ->orderBy('executed_at')
-            ->orderBy('id')
             ->get();
 
         $data = $splitTransactionsAtWholeShareBoundaries->execute($transactions);

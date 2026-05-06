@@ -56,7 +56,7 @@ class SplitTransactionsAtWholeShareBoundariesAction
                 $isSellTaxable = $this->resolveIsSellTaxable($buyDate, $sellDate);
 
                 if ($buyDate !== null && $sellDate !== null) {
-                    $holdPeriodDays = CarbonImmutable::parse($buyDate)->diffInDays(CarbonImmutable::parse($sellDate), false);
+                    $holdPeriodDays = (int) CarbonImmutable::parse($buyDate)->startOfDay()->diffInDays(CarbonImmutable::parse($sellDate)->startOfDay(), false);
                 }
 
                 $groups[] = new WholeShareGroupResponseData(
@@ -163,7 +163,7 @@ class SplitTransactionsAtWholeShareBoundariesAction
                 $segment = new WholeShareSegmentResponseData(
                     sourceTransactionId: $transaction->id,
                     externalTransactionId: $transaction->external_transaction_id ?? '',
-                    executedAt: $transaction->executed_at->toDateString(),
+                    executedAt: $transaction->executed_at->toIso8601String(),
                     ticker: $transaction->security->ticker,
                     name: $transaction->security->name,
                     numberOfShares: $take,
@@ -277,12 +277,12 @@ class SplitTransactionsAtWholeShareBoundariesAction
             return null;
         }
 
-        $buyDateValue = CarbonImmutable::parse($buyDate);
+        $buyDateValue = CarbonImmutable::parse($buyDate)->startOfDay();
 
         $effectiveSellDate = $sellDate !== null
-            ? CarbonImmutable::parse($sellDate)
+            ? CarbonImmutable::parse($sellDate)->startOfDay()
             : CarbonImmutable::now()->startOfDay();
-            
+
         $taxFreeFromDate = $buyDateValue->addYear()->addDay();
 
         return $effectiveSellDate->lt($taxFreeFromDate);

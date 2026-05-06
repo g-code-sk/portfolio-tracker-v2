@@ -1,5 +1,5 @@
 <template>
-	<AppDialog v-model="isDialogOpen" :size="1080" close-text="Close">
+	<AppDialog v-model="isDialogOpen" :size="1250" close-text="Close">
 		<template #title> Whole share buy/sell groups{{ titleTicker }} </template>
 
 		<template #body>
@@ -12,24 +12,28 @@
 			</div>
 
 			<div v-else-if="effectivePosition && !didWholeShareSegmentsRequestFail">
-				<v-data-table :headers="groupHeaders" :items="wholeShareGroups" item-value="groupIndex" show-expand density="comfortable">
+				<v-data-table class="whole-share-groups-table" :headers="groupHeaders" :items="wholeShareGroups" item-value="groupIndex" show-expand density="comfortable">
 					<template #item.groupIndex="{ item }">{{ item.groupIndex + 1 }}</template>
-					<template #item.buyDate="{ item }">{{ formatDateValue(item.buyDate) }}</template>
+					<template #item.buyDate="{ item }">
+						<span v-if="item.buyDate" :title="formatDateTime(item.buyDate)">{{ formatDate(item.buyDate) }}</span>
+						<span v-else>—</span>
+					</template>
 					<template #item.sellDate="{ item }">
-						<span :class="getHypotheticalTextClass(item)">{{ formatDateValue(item.sellDate) }}</span>
+						<span v-if="item.sellDate" :title="formatDateTime(item.sellDate)">{{ formatDate(item.sellDate) }}</span>
+						<span v-else>—</span>
 					</template>
 					<template #item.holdPeriodDays="{ item }">
-						<span :class="getHypotheticalTextClass(item)">{{ formatHoldPeriodDays(item.holdPeriodDays) }}</span>
+						<span>{{ formatHoldPeriodDays(item.holdPeriodDays) }}</span>
 					</template>
 					<template #item.weightedBuyPricePerShare="{ item }">{{ formatDecimalValue(item.weightedBuyPricePerShare) }}</template>
 					<template #item.weightedSellPricePerShare="{ item }">{{ formatDecimalValue(item.weightedSellPricePerShare) }}</template>
 					<template #item.yieldPercent="{ item }">
-						<span :class="getYieldPercentTextClass(item.yieldPercent)">
+						<span :class="getYieldTextClass(item.yieldPercent)">
 							{{ formatYieldPercent(item.yieldPercent) }}
 						</span>
 					</template>
 					<template #item.yieldAmount="{ item }">
-						<span :class="getYieldAmountTextClass(item.yieldAmount)">
+						<span :class="getYieldTextClass(item.yieldAmount)">
 							{{ formatYieldAmount(item.yieldAmount, item.buyBucket, item.sellBucket) }}
 						</span>
 					</template>
@@ -50,67 +54,7 @@
 					</template>
 
 					<template #expanded-row="{ columns, item }">
-						<tr>
-							<td :colspan="columns.length" class="bg-surface">
-								<div class="pa-4">
-									<v-row>
-										<v-col cols="12" md="6">
-											<v-card variant="outlined" rounded="lg">
-												<v-card-title class="text-subtitle-2">Buys · {{ formatDecimal(sumBucketShares(item.buyBucket)) }} of 1.0</v-card-title>
-												<v-divider />
-												<v-card-text class="py-2">
-													<div v-if="narrowSegments(item.buyBucket).length === 0" class="text-medium-emphasis">No buy segments in this group.</div>
-													<div v-else class="timeline-scroll">
-														<v-timeline density="compact" side="end" truncate-line="both">
-															<v-timeline-item
-																v-for="(segment, segmentIndex) in narrowSegments(item.buyBucket)"
-																:key="`buy-${item.groupIndex}-${segmentIndex}-${segment.sourceTransactionId}`"
-																dot-color="success"
-																size="small"
-															>
-																<div class="text-body-2">{{ formatDate(segment.executedAt) }} · #{{ segment.sourceTransactionId }}</div>
-																<div class="text-body-2">
-																	{{ formatDecimal(segment.numberOfShares) }} shares @ {{ formatDecimal(segment.pricePerShare) }} ·
-																	{{ formatDecimal(segment.totalAmount) }} {{ segment.currencySymbol }}
-																</div>
-																<div class="text-caption text-medium-emphasis">External: {{ segment.externalTransactionId }}</div>
-															</v-timeline-item>
-														</v-timeline>
-													</div>
-												</v-card-text>
-											</v-card>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-card variant="outlined" rounded="lg">
-												<v-card-title class="text-subtitle-2">Sells · {{ formatDecimal(sumBucketShares(item.sellBucket)) }} of 1.0</v-card-title>
-												<v-divider />
-												<v-card-text class="py-2">
-													<div v-if="narrowSegments(item.sellBucket).length === 0" class="text-medium-emphasis">No sell segments in this group.</div>
-													<div v-else class="timeline-scroll">
-														<v-timeline density="compact" side="end" truncate-line="both">
-															<v-timeline-item
-																v-for="(segment, segmentIndex) in narrowSegments(item.sellBucket)"
-																:key="`sell-${item.groupIndex}-${segmentIndex}-${segment.sourceTransactionId}`"
-																dot-color="error"
-																size="small"
-															>
-																<div class="text-body-2">{{ formatDate(segment.executedAt) }} · #{{ segment.sourceTransactionId }}</div>
-																<div class="text-body-2">
-																	{{ formatDecimal(segment.numberOfShares) }} shares @ {{ formatDecimal(segment.pricePerShare) }} ·
-																	{{ formatDecimal(segment.totalAmount) }} {{ segment.currencySymbol }}
-																</div>
-																<div class="text-caption text-medium-emphasis">External: {{ segment.externalTransactionId }}</div>
-															</v-timeline-item>
-														</v-timeline>
-													</div>
-												</v-card-text>
-											</v-card>
-										</v-col>
-									</v-row>
-								</div>
-							</td>
-						</tr>
+						<WholeShareGroupExpandedRow :columns-length="columns.length" :group="item" />
 					</template>
 				</v-data-table>
 			</div>
@@ -122,10 +66,11 @@
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue3-toastify'
 import AppDialog from '@/components/AppDialog.vue'
-import { formatDate } from '@/format/date'
+import WholeShareGroupExpandedRow from './WholeShareGroupExpandedRow.vue'
+import { formatDate, formatDateTime } from '@/format/date'
 import { formatDecimal } from '@/format/number'
 import { fetchWholeShareSegments } from '@/services/transaction'
-import type { PortfolioPositionResponseData, WholeShareBucketResponseData, WholeShareGroupResponseData, WholeShareSegmentResponseData } from '@/types/generated'
+import type { PortfolioPositionResponseData, WholeShareBucketResponseData, WholeShareGroupResponseData } from '@/types/generated'
 
 const props = defineProps<{
 	portfolioId: number
@@ -156,22 +101,6 @@ const titleTicker = computed(() => {
 	return ticker ? ` — ${ticker}` : ''
 })
 
-const narrowSegments = (bucket: WholeShareBucketResponseData | null): WholeShareSegmentResponseData[] => {
-	if (!bucket) {
-		return []
-	}
-
-	return bucket.segments as WholeShareSegmentResponseData[]
-}
-
-const sumBucketShares = (bucket: WholeShareBucketResponseData | null): number => {
-	return narrowSegments(bucket).reduce((sum, segment) => sum + segment.numberOfShares, 0)
-}
-
-const formatDateValue = (value: string | null): string => {
-	return value ? formatDate(value) : '—'
-}
-
 const formatHoldPeriodDays = (value: number | null): string => {
 	return value === null ? '—' : `${value}`
 }
@@ -201,28 +130,12 @@ const formatYieldAmount = (value: number | null, buyBucket: WholeShareBucketResp
 	return `${sign}${formatDecimal(value)}${currencySymbol ? ` ${currencySymbol}` : ''}`
 }
 
-const getYieldPercentTextClass = (value: number | null): string => {
+const getYieldTextClass = (value: number | null): string => {
 	if (value === null || value === 0) {
 		return ''
 	}
 
 	return value > 0 ? 'text-success' : 'text-error'
-}
-
-const getYieldAmountTextClass = (value: number | null): string => {
-	if (value === null || value === 0) {
-		return ''
-	}
-
-	return value > 0 ? 'text-success' : 'text-error'
-}
-
-const isHypotheticalSoldGroup = (group: WholeShareGroupResponseData): boolean => {
-	return group.buyDate !== null && group.sellBucket === null && group.sellDate !== null
-}
-
-const getHypotheticalTextClass = (group: WholeShareGroupResponseData): string => {
-	return isHypotheticalSoldGroup(group) ? 'text-info' : ''
 }
 
 const loadWholeShareSegments = async (): Promise<void> => {
@@ -260,8 +173,8 @@ watch(
 </script>
 
 <style scoped>
-.timeline-scroll {
-	max-height: 260px;
-	overflow-y: auto;
+:deep(.whole-share-groups-table th),
+:deep(.whole-share-groups-table td) {
+	white-space: nowrap;
 }
 </style>

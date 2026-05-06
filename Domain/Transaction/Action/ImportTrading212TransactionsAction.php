@@ -7,18 +7,18 @@ use App\Models\Portfolio;
 use App\Models\Security;
 use App\Models\Transaction;
 use App\Models\TransactionType;
+use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
 use Domain\Transaction\Data\Trading212ImportRowData;
 use Domain\Transaction\Enums\Trading212TransactionType;
 use Domain\Transaction\Enums\TransactionTypeCode;
-use Carbon\Carbon;
-use Carbon\Exceptions\InvalidFormatException;
 use Domain\Transaction\Exception\InvalidExecutionTimeTrading212ImportException;
 use Domain\Transaction\Exception\InvalidPriceCurrencyTrading212ImportException;
 use Domain\Transaction\Exception\MissingExternalTransactionIdTrading212ImportException;
 use Domain\Transaction\Exception\MissingPriceCurrencyTrading212ImportException;
-use Domain\Transaction\Exception\MissingTransactionTypeTrading212ImportException;
 use Domain\Transaction\Exception\MissingShareOrPriceTrading212ImportException;
 use Domain\Transaction\Exception\MissingTickerTrading212ImportException;
+use Domain\Transaction\Exception\MissingTransactionTypeTrading212ImportException;
 use Domain\Transaction\Exception\NonNumericShareOrPriceTrading212ImportException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -84,10 +84,10 @@ class ImportTrading212TransactionsAction
         }
     }
 
-    private function parseExecutedAt(Trading212ImportRowData $importRow): string
+    private function parseExecutedAt(Trading212ImportRowData $importRow): Carbon
     {
         try {
-            return Carbon::createFromFormat('Y-m-d H:i:s', $importRow->time)->toDateString();
+            return Carbon::createFromFormat('Y-m-d H:i:s', $importRow->time);
         } catch (InvalidFormatException) {
             throw InvalidExecutionTimeTrading212ImportException::fromImportRow($importRow);
         }

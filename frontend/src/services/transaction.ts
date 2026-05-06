@@ -6,7 +6,7 @@ import type {
 	TransactionImportPayloadData,
 	TransactionImportType,
 	TransactionImportTypesResponseData,
-	WholeShareSegmentsResponseData,
+	WholeShareGroupsResponseData,
 } from '@/types/generated'
 
 type TransactionImportUploadPayload = Omit<TransactionImportPayloadData, 'importType' | 'file'> & {
@@ -47,8 +47,8 @@ export const fetchPositionTransactions = async (portfolioId: number, securityId:
 	return data.data?.transactions ?? []
 }
 
-export const fetchWholeShareSegments = async (portfolioId: number, securityId: number, currencyId: number): Promise<WholeShareSegmentsResponseData> => {
-	const { data } = await axios.get<ApiSuccessResponse<WholeShareSegmentsResponseData>>(`/api/portfolios/${portfolioId}/transactions/whole-share-buy-segments`, {
+export const fetchWholeShareSegments = async (portfolioId: number, securityId: number, currencyId: number): Promise<WholeShareGroupsResponseData> => {
+	const { data } = await axios.get<ApiSuccessResponse<WholeShareGroupsResponseData>>(`/api/portfolios/${portfolioId}/transactions/whole-share-buy-segments`, {
 		params: { securityId, currencyId },
 	})
 
