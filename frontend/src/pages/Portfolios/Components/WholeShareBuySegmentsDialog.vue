@@ -1,5 +1,5 @@
 <template>
-	<AppDialog v-model="isDialogOpen" :size="920" close-text="Close">
+	<AppDialog v-model="isDialogOpen" :size="1080" close-text="Close">
 		<template #title> Whole share buy/sell groups{{ titleTicker }} </template>
 
 		<template #body>
@@ -13,10 +13,41 @@
 
 			<div v-else-if="effectivePosition && !didWholeShareSegmentsRequestFail">
 				<v-data-table :headers="groupHeaders" :items="wholeShareGroups" item-value="groupIndex" show-expand density="comfortable">
-					<template #item.groupIndex="{ item }">Whole share group {{ item.groupIndex + 1 }}</template>
-					<template #item.buyCompletedAt="{ item }">{{ formatDateValue(item.buyCompletedAt) }}</template>
-					<template #item.soldAt="{ item }">{{ formatDateValue(item.soldAt) }}</template>
-					<template #item.daysToSell="{ item }">{{ formatDaysToSell(item.daysToSell) }}</template>
+					<template #item.groupIndex="{ item }">{{ item.groupIndex + 1 }}</template>
+					<template #item.buyDate="{ item }">{{ formatDateValue(item.buyDate) }}</template>
+					<template #item.sellDate="{ item }">
+						<span :class="getHypotheticalTextClass(item)">{{ formatDateValue(item.sellDate) }}</span>
+					</template>
+					<template #item.holdPeriodDays="{ item }">
+						<span :class="getHypotheticalTextClass(item)">{{ formatHoldPeriodDays(item.holdPeriodDays) }}</span>
+					</template>
+					<template #item.weightedBuyPricePerShare="{ item }">{{ formatDecimalValue(item.weightedBuyPricePerShare) }}</template>
+					<template #item.weightedSellPricePerShare="{ item }">{{ formatDecimalValue(item.weightedSellPricePerShare) }}</template>
+					<template #item.yieldPercent="{ item }">
+						<span :class="getYieldPercentTextClass(item.yieldPercent)">
+							{{ formatYieldPercent(item.yieldPercent) }}
+						</span>
+					</template>
+					<template #item.yieldAmount="{ item }">
+						<span :class="getYieldAmountTextClass(item.yieldAmount)">
+							{{ formatYieldAmount(item.yieldAmount, item.buyBucket, item.sellBucket) }}
+						</span>
+					</template>
+					<template #item.isSellTaxable="{ item }">
+						<div class="d-flex justify-center">
+							<span v-if="item.isSellTaxable === null">—</span>
+							<v-tooltip v-else location="top">
+								<template #activator="{ props: tooltipProps }">
+									<v-icon
+										v-bind="tooltipProps"
+										:color="item.isSellTaxable ? 'error' : 'success'"
+										:icon="item.isSellTaxable ? 'mdi-alert-circle' : 'mdi-check-circle'"
+									/>
+								</template>
+								{{ item.isSellTaxable ? 'Taxable sell' : 'Tax-free sell' }}
+							</v-tooltip>
+						</div>
+					</template>
 
 					<template #expanded-row="{ columns, item }">
 						<tr>
@@ -109,11 +140,16 @@ const didWholeShareSegmentsRequestFail = ref(false)
 
 const effectivePosition = computed(() => props.position)
 const groupHeaders = [
-	{ title: 'Group', key: 'groupIndex' },
-	{ title: 'Buy completed', key: 'buyCompletedAt' },
-	{ title: 'Sold at', key: 'soldAt' },
-	{ title: 'Days to sell', key: 'daysToSell' },
-]
+	{ title: 'Group Index', key: 'groupIndex' },
+	{ title: 'Buy date', key: 'buyDate' },
+	{ title: 'Sell date', key: 'sellDate' },
+	{ title: 'Hold period', key: 'holdPeriodDays' },
+	{ title: 'Weighted buy', key: 'weightedBuyPricePerShare', align: 'end' },
+	{ title: 'Weighted sell', key: 'weightedSellPricePerShare', align: 'end' },
+	{ title: 'Yield %', key: 'yieldPercent', align: 'end' },
+	{ title: 'Yield', key: 'yieldAmount', align: 'end' },
+	{ title: 'Tax-Free', key: 'isSellTaxable', align: 'center' },
+] as const
 
 const titleTicker = computed(() => {
 	const ticker = effectivePosition.value?.ticker
@@ -136,8 +172,57 @@ const formatDateValue = (value: string | null): string => {
 	return value ? formatDate(value) : '—'
 }
 
-const formatDaysToSell = (value: number | null): string => {
+const formatHoldPeriodDays = (value: number | null): string => {
 	return value === null ? '—' : `${value}`
+}
+
+const formatDecimalValue = (value: number | null): string => {
+	return value === null ? '—' : formatDecimal(value)
+}
+
+const formatYieldPercent = (value: number | null): string => {
+	if (value === null) {
+		return '—'
+	}
+
+	const sign = value > 0 ? '+' : ''
+
+	return `${sign}${formatDecimal(value)}%`
+}
+
+const formatYieldAmount = (value: number | null, buyBucket: WholeShareBucketResponseData | null, sellBucket: WholeShareBucketResponseData | null): string => {
+	if (value === null) {
+		return '—'
+	}
+
+	const sign = value > 0 ? '+' : ''
+	const currencySymbol = sellBucket?.segments?.[0]?.currencySymbol ?? buyBucket?.segments?.[0]?.currencySymbol ?? ''
+
+	return `${sign}${formatDecimal(value)}${currencySymbol ? ` ${currencySymbol}` : ''}`
+}
+
+const getYieldPercentTextClass = (value: number | null): string => {
+	if (value === null || value === 0) {
+		return ''
+	}
+
+	return value > 0 ? 'text-success' : 'text-error'
+}
+
+const getYieldAmountTextClass = (value: number | null): string => {
+	if (value === null || value === 0) {
+		return ''
+	}
+
+	return value > 0 ? 'text-success' : 'text-error'
+}
+
+const isHypotheticalSoldGroup = (group: WholeShareGroupResponseData): boolean => {
+	return group.buyDate !== null && group.sellBucket === null && group.sellDate !== null
+}
+
+const getHypotheticalTextClass = (group: WholeShareGroupResponseData): string => {
+	return isHypotheticalSoldGroup(group) ? 'text-info' : ''
 }
 
 const loadWholeShareSegments = async (): Promise<void> => {

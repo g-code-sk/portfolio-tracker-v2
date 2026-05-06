@@ -81,9 +81,17 @@ export type WholeShareGroupResponseData = {
 groupIndex: number,
 buyBucket: WholeShareBucketResponseData | null,
 sellBucket: WholeShareBucketResponseData | null,
-buyCompletedAt: string | null,
-soldAt: string | null,
-daysToSell: number | null,
+buyDate: string | null,
+sellDate: string | null,
+holdPeriodDays: number | null,
+weightedBuyPricePerShare: number | null,
+weightedSellPricePerShare: number | null,
+yieldPercent: number | null,
+yieldAmount: number | null,
+isSellTaxable: boolean | null,
+};
+export type WholeShareGroupsResponseData = {
+groups: Array<any>,
 };
 export type WholeShareSegmentResponseData = {
 sourceTransactionId: number,
@@ -95,7 +103,4 @@ numberOfShares: number,
 pricePerShare: number,
 totalAmount: number,
 currencySymbol: string,
-};
-export type WholeShareSegmentsResponseData = {
-groups: Array<any>,
 };

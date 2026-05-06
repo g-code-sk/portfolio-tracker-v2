@@ -12,8 +12,13 @@ class WholeShareGroupResponseData extends Data
         public int $groupIndex,
         public ?WholeShareBucketResponseData $buyBucket,
         public ?WholeShareBucketResponseData $sellBucket,
-        public ?string $buyCompletedAt,
-        public ?string $soldAt,
-        public ?int $daysToSell,
+        public ?string $buyDate,
+        public ?string $sellDate,
+        public ?int $holdPeriodDays,
+        public ?float $weightedBuyPricePerShare,
+        public ?float $weightedSellPricePerShare,
+        public ?float $yieldPercent,
+        public ?float $yieldAmount,
+        public ?bool $isSellTaxable,
     ) {}
 }
