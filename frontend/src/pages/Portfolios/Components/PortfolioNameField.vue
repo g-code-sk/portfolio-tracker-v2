@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import AppTextField from '@/components/AppTextField.vue'
+import AppTextField from '@/components/Inputs/AppTextField.vue'
 
 withDefaults(
 	defineProps<{

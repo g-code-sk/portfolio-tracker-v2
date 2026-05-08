@@ -53,15 +53,14 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue3-toastify'
 import AppBreadcrumbs, { type AppBreadcrumbItem } from '@/components/AppBreadcrumbs.vue'
-import { fetchPortfolio } from '@/services/portfolio'
 import { fetchPositionTransactions } from '@/services/transaction'
 import { formatDecimal } from '@/format/number'
 import { formatDate, formatDateTime } from '@/format/date'
-import type { PortfolioResponseData, PortfolioTransactionResponseData } from '@/types/generated'
+import type { PortfolioTransactionResponseData, PortfolioTransactionsResponseData } from '@/types/generated'
 
 const route = useRoute()
-const portfolio = ref<PortfolioResponseData | null>(null)
 const transactions = ref<PortfolioTransactionResponseData[]>([])
+const transactionsResponse = ref<PortfolioTransactionsResponseData | null>(null)
 const isLoadingTransactions = ref(false)
 
 const portfolioId = computed(() => Number(route.params.portfolioId))
@@ -76,20 +75,20 @@ const currencyId = computed(() => {
 
 	return Number.isNaN(parsedValue) ? null : parsedValue
 })
-const ticker = computed(() => transactions.value[0]?.ticker ?? 'Position')
-const currencySymbol = computed(() => transactions.value[0]?.currencySymbol ?? '')
+const securityTicker = computed(() => transactionsResponse.value?.securityTicker ?? transactions.value[0]?.ticker ?? null)
+const currencySymbol = computed(() => transactionsResponse.value?.currencySymbol ?? transactions.value[0]?.currencySymbol ?? '')
 const positionTitle = computed(() => {
 	const label = currencySymbol.value ? ` (${currencySymbol.value})` : ''
-	return `${ticker.value}${label}`
+	return `${securityTicker.value ?? 'Position'}${label}`
 })
 
 const breadcrumbItems = computed<AppBreadcrumbItem[]>(() => [
 	{ title: 'Portfolios', to: { name: 'portfolios' } },
 	{
-		title: portfolio.value?.name ?? 'Portfolio',
+		title: transactionsResponse.value?.portfolioName ?? 'Portfolio',
 		to: { name: 'portfolio-details', params: { portfolioId: portfolioId.value } },
 	},
-	{ title: ticker.value, disabled: true },
+	{ title: securityTicker.value ?? 'Position', disabled: true },
 ])
 
 const headers = [
@@ -103,21 +102,12 @@ const headers = [
 	{ title: 'Currency', key: 'currencySymbol', sortable: true },
 ]
 
-const loadPortfolio = async (): Promise<void> => {
-	try {
-		portfolio.value = await fetchPortfolio(portfolioId.value)
-	} catch (error) {
-		console.error('Portfolio fetch failed', error)
-		toast.error('Something went wrong when loading portfolio details.')
-		portfolio.value = null
-	}
-}
-
 const loadTransactions = async (): Promise<void> => {
 	isLoadingTransactions.value = true
 
 	try {
-		transactions.value = await fetchPositionTransactions(portfolioId.value, securityId.value, currencyId.value)
+		transactionsResponse.value = await fetchPositionTransactions(portfolioId.value, securityId.value, currencyId.value)
+		transactions.value = transactionsResponse.value.transactions
 	} catch (error) {
 		console.error('Position transactions fetch failed', error)
 		toast.error('Something went wrong when loading position transactions.')
@@ -127,6 +117,6 @@ const loadTransactions = async (): Promise<void> => {
 }
 
 onMounted(async () => {
-	await Promise.all([loadPortfolio(), loadTransactions()])
+	await loadTransactions()
 })
 </script>

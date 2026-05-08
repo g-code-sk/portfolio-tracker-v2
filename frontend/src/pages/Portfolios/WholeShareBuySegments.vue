@@ -22,7 +22,7 @@
 						</v-card-item>
 						<v-divider />
 
-						<v-card-text v-if="isLoadingSegments || isLoadingPortfolio" class="d-flex justify-center py-8">
+						<v-card-text v-if="isLoadingSegments" class="d-flex justify-center py-8">
 							<v-progress-circular indeterminate color="primary" size="32" />
 						</v-card-text>
 
@@ -59,14 +59,11 @@ import WholeShareGroupsTable from './Components/WholeShareGroup/WholeShareGroups
 import WholeShareGroupsSummary from './Components/WholeShareGroup/WholeShareGroupsSummary.vue'
 import WholeShareYearFilters from './Components/WholeShareGroup/WholeShareYearFilters.vue'
 import { getYearFromDateString } from '@/format/date'
-import { fetchPortfolio } from '@/services/portfolio'
 import { fetchWholeShareSegments } from '@/services/transaction'
-import type { PortfolioResponseData, WholeShareGroupResponseData, WholeShareGroupsResponseData } from '@/types/generated'
+import type { WholeShareGroupResponseData, WholeShareGroupsResponseData } from '@/types/generated'
 
 const route = useRoute()
 
-const portfolio = ref<PortfolioResponseData | null>(null)
-const isLoadingPortfolio = ref(false)
 const wholeShareGroups = ref<WholeShareGroupResponseData[]>([])
 const wholeShareGroupsResponse = ref<WholeShareGroupsResponseData | null>(null)
 const isLoadingSegments = ref(false)
@@ -128,7 +125,7 @@ const wholeShareCurrencySymbol = computed(() => wholeShareGroupsResponse.value?.
 const breadcrumbItems = computed<AppBreadcrumbItem[]>(() => [
 	{ title: 'Portfolios', to: { name: 'portfolios' } },
 	{
-		title: portfolio.value?.name ?? 'Portfolio',
+		title: wholeShareGroupsResponse.value?.portfolioName ?? 'Portfolio',
 		to: { name: 'portfolio-details', params: { portfolioId: portfolioId.value } },
 	},
 	{
@@ -141,20 +138,6 @@ const breadcrumbItems = computed<AppBreadcrumbItem[]>(() => [
 	},
 	{ title: 'Whole share buy/sell groups', disabled: true },
 ])
-
-const loadPortfolio = async (): Promise<void> => {
-	isLoadingPortfolio.value = true
-
-	try {
-		portfolio.value = await fetchPortfolio(portfolioId.value)
-	} catch (error) {
-		console.error('Portfolio fetch failed', error)
-		toast.error('Something went wrong when loading portfolio details.')
-		portfolio.value = null
-	} finally {
-		isLoadingPortfolio.value = false
-	}
-}
 
 const loadWholeShareSegments = async (): Promise<void> => {
 	if (currencyId.value === null) {
@@ -185,6 +168,6 @@ const loadWholeShareSegments = async (): Promise<void> => {
 }
 
 onMounted(async () => {
-	await Promise.all([loadPortfolio(), loadWholeShareSegments()])
+	await loadWholeShareSegments()
 })
 </script>

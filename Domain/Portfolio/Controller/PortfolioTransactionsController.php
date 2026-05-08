@@ -34,29 +34,26 @@ class PortfolioTransactionsController extends Controller
             $transactionQuery->where('currency_id', $queryData->currencyId);
         }
 
-        $transactions = $transactionQuery
+        $transactionModels = $transactionQuery
             ->orderByDesc('executed_at')
-            ->get()
+            ->get();
+
+        $transactions = $transactionModels
             ->map(function (Transaction $transaction): PortfolioTransactionResponseData {
-                return new PortfolioTransactionResponseData(
-                    id: $transaction->id,
-                    externalTransactionId: $transaction->external_transaction_id ?? '',
-                    ticker: $transaction->security->ticker,
-                    name: $transaction->security->name,
-                    typeCode: $transaction->type->code->value,
-                    numberOfShares: (float) $transaction->number_of_shares,
-                    pricePerShare: (float) $transaction->price_per_share,
-                    totalAmount: (float) $transaction->number_of_shares * (float) $transaction->price_per_share,
-                    currencySymbol: $transaction->currency->symbol,
-                    executedAt: $transaction->executed_at->toIso8601String(),
-                );
+                return PortfolioTransactionResponseData::fromTransaction($transaction);
             });
+
+        $metadataTransaction = $transactionModels->first();
 
         return $apiResponse->make(
             message: 'Portfolio transactions fetched successfully.',
             status: Response::HTTP_OK,
             data: new PortfolioTransactionsResponseData(
                 transactions: $transactions->all(),
+                portfolioName: $portfolio->name,
+                securityTicker: $metadataTransaction?->security->ticker,
+                securityName: $metadataTransaction?->security->name,
+                currencySymbol: $metadataTransaction?->currency->symbol,
             ),
         );
     }
