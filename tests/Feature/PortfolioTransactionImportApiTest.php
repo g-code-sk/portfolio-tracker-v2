@@ -249,7 +249,7 @@ class PortfolioTransactionImportApiTest extends TestCase
         $this->assertSame('11111111-1111-1111-1111-111111111111', $transaction->external_transaction_id);
         $this->assertSame(1.0, (float) $transaction->number_of_shares);
         $this->assertSame(10.0, (float) $transaction->price_per_share);
-        $this->assertSame('2022-01-31', $transaction->executed_at->toDateString());
+        $this->assertSame('2022-01-31 16:40:01', $transaction->executed_at->toDateTimeString());
     }
 
     public function test_trading212_import_persists_market_buy_without_notes_column(): void
@@ -302,7 +302,7 @@ class PortfolioTransactionImportApiTest extends TestCase
         $this->assertSame('11111111-1111-1111-1111-111111111111', $transaction->external_transaction_id);
         $this->assertSame(1.0, (float) $transaction->number_of_shares);
         $this->assertSame(10.0, (float) $transaction->price_per_share);
-        $this->assertSame('2022-01-31', $transaction->executed_at->toDateString());
+        $this->assertSame('2022-01-31 16:40:01', $transaction->executed_at->toDateTimeString());
     }
 
     public function test_trading212_import_rejects_market_buy_with_missing_time(): void

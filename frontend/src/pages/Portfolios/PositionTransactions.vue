@@ -1,7 +1,7 @@
 <template>
 	<v-main class="bg-grey-lighten-5">
 		<v-container class="py-8">
-			<v-btn class="mb-4" variant="text" prepend-icon="mdi-arrow-left" :to="{ name: 'portfolio-details', params: { portfolioId } }"> Back to Portfolio </v-btn>
+			<AppBreadcrumbs :items="breadcrumbItems" />
 
 			<v-row class="align-center">
 				<v-col cols="12">
@@ -29,7 +29,7 @@
 
 						<v-data-table v-else :headers="headers" :items="transactions">
 							<template #item.executedAt="{ item }">
-								{{ formatDate(item.executedAt) }}
+								<span :title="formatDateTime(item.executedAt)">{{ formatDate(item.executedAt) }}</span>
 							</template>
 							<template #item.numberOfShares="{ item }">
 								<span class="d-flex justify-end">{{ formatDecimal(item.numberOfShares) }}</span>
@@ -52,12 +52,15 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue3-toastify'
+import AppBreadcrumbs, { type AppBreadcrumbItem } from '@/components/AppBreadcrumbs.vue'
+import { fetchPortfolio } from '@/services/portfolio'
 import { fetchPositionTransactions } from '@/services/transaction'
 import { formatDecimal } from '@/format/number'
-import { formatDate } from '@/format/date'
-import type { PortfolioTransactionResponseData } from '@/types/generated'
+import { formatDate, formatDateTime } from '@/format/date'
+import type { PortfolioResponseData, PortfolioTransactionResponseData } from '@/types/generated'
 
 const route = useRoute()
+const portfolio = ref<PortfolioResponseData | null>(null)
 const transactions = ref<PortfolioTransactionResponseData[]>([])
 const isLoadingTransactions = ref(false)
 
@@ -73,12 +76,21 @@ const currencyId = computed(() => {
 
 	return Number.isNaN(parsedValue) ? null : parsedValue
 })
-const ticker = computed(() => String(route.query.ticker ?? ''))
+const ticker = computed(() => transactions.value[0]?.ticker ?? 'Position')
 const currencySymbol = computed(() => transactions.value[0]?.currencySymbol ?? '')
 const positionTitle = computed(() => {
 	const label = currencySymbol.value ? ` (${currencySymbol.value})` : ''
-	return `${ticker.value || 'Position'}${label}`
+	return `${ticker.value}${label}`
 })
+
+const breadcrumbItems = computed<AppBreadcrumbItem[]>(() => [
+	{ title: 'Portfolios', to: { name: 'portfolios' } },
+	{
+		title: portfolio.value?.name ?? 'Portfolio',
+		to: { name: 'portfolio-details', params: { portfolioId: portfolioId.value } },
+	},
+	{ title: ticker.value, disabled: true },
+])
 
 const headers = [
 	{ title: 'Date', key: 'executedAt', sortable: true },
@@ -90,6 +102,16 @@ const headers = [
 	{ title: 'Total', key: 'totalAmount', sortable: true, align: 'end' as const },
 	{ title: 'Currency', key: 'currencySymbol', sortable: true },
 ]
+
+const loadPortfolio = async (): Promise<void> => {
+	try {
+		portfolio.value = await fetchPortfolio(portfolioId.value)
+	} catch (error) {
+		console.error('Portfolio fetch failed', error)
+		toast.error('Something went wrong when loading portfolio details.')
+		portfolio.value = null
+	}
+}
 
 const loadTransactions = async (): Promise<void> => {
 	isLoadingTransactions.value = true
@@ -104,5 +126,7 @@ const loadTransactions = async (): Promise<void> => {
 	}
 }
 
-onMounted(loadTransactions)
+onMounted(async () => {
+	await Promise.all([loadPortfolio(), loadTransactions()])
+})
 </script>

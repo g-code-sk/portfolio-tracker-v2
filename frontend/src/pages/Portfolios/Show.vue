@@ -1,7 +1,7 @@
 <template>
 	<v-main class="bg-grey-lighten-5">
 		<v-container class="py-8">
-			<v-btn class="mb-4" variant="text" prepend-icon="mdi-arrow-left" :to="{ name: 'portfolios' }"> Back to Portfolios </v-btn>
+			<AppBreadcrumbs :items="breadcrumbItems" />
 
 			<v-row v-if="isLoadingPortfolio">
 				<v-col cols="12" class="d-flex justify-center py-10">
@@ -43,6 +43,7 @@
 										<th class="text-right">Sold Amount</th>
 										<th class="text-right">Total Shares</th>
 										<th class="text-left">Currency</th>
+										<th class="text-end">Actions</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -52,7 +53,7 @@
 												:to="{
 													name: 'portfolio-position-transactions',
 													params: { portfolioId, securityId: position.securityId },
-													query: { currencyId: position.currencyId, ticker: position.ticker },
+													query: { currencyId: position.currencyId },
 												}"
 											>
 												{{ position.ticker }}
@@ -65,6 +66,26 @@
 										<td class="text-right">{{ formatDecimal(position.soldAmount) }}</td>
 										<td class="text-right">{{ formatDecimal(position.totalShares) }}</td>
 										<td>{{ position.currencySymbol }}</td>
+										<td class="text-end">
+											<v-tooltip text="Buy splits by whole share" location="top">
+												<template #activator="{ props: tooltipActivatorProps }">
+													<v-btn
+														v-bind="tooltipActivatorProps"
+														icon
+														variant="text"
+														density="compact"
+														aria-label="Buy splits by whole share"
+														:to="{
+															name: 'portfolio-position-whole-share-buy-segments',
+															params: { portfolioId, securityId: position.securityId },
+															query: { currencyId: position.currencyId },
+														}"
+													>
+														<v-icon>mdi-view-split-vertical</v-icon>
+													</v-btn>
+												</template>
+											</v-tooltip>
+										</td>
 									</tr>
 								</tbody>
 							</v-table>
@@ -82,6 +103,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue3-toastify'
 import PortfolioImportAction from './Components/PortfolioImportAction.vue'
+import AppBreadcrumbs, { type AppBreadcrumbItem } from '@/components/AppBreadcrumbs.vue'
 import AppLink from '@/components/AppLink.vue'
 import { fetchPortfolio, fetchPortfolioPositions } from '@/services/portfolio'
 import { formatDecimal } from '@/format/number'
@@ -94,6 +116,11 @@ const isLoadingPortfolio = ref(false)
 const isLoadingPositions = ref(false)
 
 const portfolioId = computed(() => Number(route.params.portfolioId))
+
+const breadcrumbItems = computed<AppBreadcrumbItem[]>(() => [
+	{ title: 'Portfolios', to: { name: 'portfolios' } },
+	{ title: portfolio.value?.name ?? 'Portfolio', disabled: true },
+])
 
 const loadPortfolio = async (): Promise<void> => {
 	isLoadingPortfolio.value = true

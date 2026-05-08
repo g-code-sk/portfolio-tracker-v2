@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Domain\Transaction\Enums\TransactionTypeCode;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,7 +23,7 @@ class Transaction extends Model
     protected function casts(): array
     {
         return [
-            'executed_at' => 'date',
+            'executed_at' => 'datetime',
         ];
     }
 

@@ -102,7 +102,7 @@ class PortfolioPositionTransactionsApiTest extends TestCase
             ->assertJsonPath('data.transactions.0.externalTransactionId', 'aapl-usd-1')
             ->assertJsonPath('data.transactions.0.currencySymbol', 'USD')
             ->assertJsonPath('data.transactions.0.ticker', 'AAPL')
-            ->assertJsonPath('data.transactions.0.executedAt', '2022-01-31')
+            ->assertJsonPath('data.transactions.0.executedAt', '2022-01-31T00:00:00+00:00')
             ->assertJsonMissingPath('data.transactions.0.createdAt');
     }
 

@@ -36,7 +36,6 @@ class PortfolioTransactionsController extends Controller
 
         $transactions = $transactionQuery
             ->orderByDesc('executed_at')
-            ->orderByDesc('id')
             ->get()
             ->map(function (Transaction $transaction): PortfolioTransactionResponseData {
                 return new PortfolioTransactionResponseData(
@@ -49,7 +48,7 @@ class PortfolioTransactionsController extends Controller
                     pricePerShare: (float) $transaction->price_per_share,
                     totalAmount: (float) $transaction->number_of_shares * (float) $transaction->price_per_share,
                     currencySymbol: $transaction->currency->symbol,
-                    executedAt: $transaction->executed_at->toDateString(),
+                    executedAt: $transaction->executed_at->toIso8601String(),
                 );
             });
 
