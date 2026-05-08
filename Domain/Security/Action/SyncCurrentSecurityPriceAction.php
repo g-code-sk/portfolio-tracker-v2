@@ -17,14 +17,14 @@ class SyncCurrentSecurityPriceAction
     public function execute(Security $security): SyncCurrentSecurityPriceResultData
     {
         if ($security->ticker === '') {
-            return SyncCurrentSecurityPriceResultData::skipped($security->id, $security->ticker);
+            return SyncCurrentSecurityPriceResultData::skipped($security->id, $security->ticker, 'Ticker is empty');
         }
 
         try {
             $currentPriceData = $this->currentSecurityPriceProvider->getCurrentPrice($security->ticker);
 
             if ($currentPriceData === null) {
-                return SyncCurrentSecurityPriceResultData::skipped($security->id, $security->ticker);
+                return SyncCurrentSecurityPriceResultData::skipped($security->id, $security->ticker, 'Current price data is null');
             }
 
             $securityDataProvider = SecurityDataProvider::query()
@@ -41,7 +41,7 @@ class SyncCurrentSecurityPriceAction
 
             $security->current_price = $currentPriceData->price;
             $security->current_price_currency = $currentPriceData->currency;
-            $security->current_price_updated_at = $currentPriceData->quotedAt;
+            $security->current_price_updated_at = now();
             $security->current_data_provider_id = $securityDataProvider->id;
 
             $security->save();

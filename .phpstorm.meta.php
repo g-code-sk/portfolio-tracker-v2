@@ -13,6 +13,7 @@ namespace PHPSTORM_META {
     */
     override(new \Illuminate\Contracts\Container\Container, map([
         '' => '@',
+            'Domain\Security\Contract\CurrentSecurityPriceProviderInterface' => \Domain\Security\Service\FinnhubCurrentSecurityPriceProvider::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -78,6 +79,7 @@ namespace PHPSTORM_META {
         ]));
     override(\Illuminate\Container\Container::makeWith(0), map([
         '' => '@',
+            'Domain\Security\Contract\CurrentSecurityPriceProviderInterface' => \Domain\Security\Service\FinnhubCurrentSecurityPriceProvider::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -143,6 +145,7 @@ namespace PHPSTORM_META {
         ]));
     override(\Illuminate\Contracts\Container\Container::get(0), map([
         '' => '@',
+            'Domain\Security\Contract\CurrentSecurityPriceProviderInterface' => \Domain\Security\Service\FinnhubCurrentSecurityPriceProvider::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -208,6 +211,7 @@ namespace PHPSTORM_META {
         ]));
     override(\Illuminate\Contracts\Container\Container::make(0), map([
         '' => '@',
+            'Domain\Security\Contract\CurrentSecurityPriceProviderInterface' => \Domain\Security\Service\FinnhubCurrentSecurityPriceProvider::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -273,6 +277,7 @@ namespace PHPSTORM_META {
         ]));
     override(\Illuminate\Contracts\Container\Container::makeWith(0), map([
         '' => '@',
+            'Domain\Security\Contract\CurrentSecurityPriceProviderInterface' => \Domain\Security\Service\FinnhubCurrentSecurityPriceProvider::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -338,6 +343,7 @@ namespace PHPSTORM_META {
         ]));
     override(\App::get(0), map([
         '' => '@',
+            'Domain\Security\Contract\CurrentSecurityPriceProviderInterface' => \Domain\Security\Service\FinnhubCurrentSecurityPriceProvider::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -403,6 +409,7 @@ namespace PHPSTORM_META {
         ]));
     override(\App::make(0), map([
         '' => '@',
+            'Domain\Security\Contract\CurrentSecurityPriceProviderInterface' => \Domain\Security\Service\FinnhubCurrentSecurityPriceProvider::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -468,6 +475,7 @@ namespace PHPSTORM_META {
         ]));
     override(\App::makeWith(0), map([
         '' => '@',
+            'Domain\Security\Contract\CurrentSecurityPriceProviderInterface' => \Domain\Security\Service\FinnhubCurrentSecurityPriceProvider::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -533,6 +541,7 @@ namespace PHPSTORM_META {
         ]));
     override(\app(0), map([
         '' => '@',
+            'Domain\Security\Contract\CurrentSecurityPriceProviderInterface' => \Domain\Security\Service\FinnhubCurrentSecurityPriceProvider::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -598,6 +607,7 @@ namespace PHPSTORM_META {
         ]));
     override(\resolve(0), map([
         '' => '@',
+            'Domain\Security\Contract\CurrentSecurityPriceProviderInterface' => \Domain\Security\Service\FinnhubCurrentSecurityPriceProvider::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -663,6 +673,7 @@ namespace PHPSTORM_META {
         ]));
     override(\Psr\Container\ContainerInterface::get(0), map([
         '' => '@',
+            'Domain\Security\Contract\CurrentSecurityPriceProviderInterface' => \Domain\Security\Service\FinnhubCurrentSecurityPriceProvider::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -1136,6 +1147,9 @@ namespace PHPSTORM_META {
             'services.ses.region' => 'string',
             'services.slack.notifications.bot_user_oauth_token' => 'NULL',
             'services.slack.notifications.channel' => 'NULL',
+            'services.finnhub.key' => 'string',
+            'services.SECURITY_DATA_PROVIDER' => 'string',
+            'services.security_price_refresh_after_hours' => 'integer',
             'session.driver' => 'string',
             'session.lifetime' => 'integer',
             'session.expire_on_close' => 'boolean',
@@ -1679,6 +1693,9 @@ namespace PHPSTORM_META {
             'services.ses.region' => 'string',
             'services.slack.notifications.bot_user_oauth_token' => 'NULL',
             'services.slack.notifications.channel' => 'NULL',
+            'services.finnhub.key' => 'string',
+            'services.SECURITY_DATA_PROVIDER' => 'string',
+            'services.security_price_refresh_after_hours' => 'integer',
             'session.driver' => 'string',
             'session.lifetime' => 'integer',
             'session.expire_on_close' => 'boolean',
@@ -2222,6 +2239,9 @@ namespace PHPSTORM_META {
             'services.ses.region' => 'string',
             'services.slack.notifications.bot_user_oauth_token' => 'NULL',
             'services.slack.notifications.channel' => 'NULL',
+            'services.finnhub.key' => 'string',
+            'services.SECURITY_DATA_PROVIDER' => 'string',
+            'services.security_price_refresh_after_hours' => 'integer',
             'session.driver' => 'string',
             'session.lifetime' => 'integer',
             'session.expire_on_close' => 'boolean',
@@ -2491,46 +2511,45 @@ namespace PHPSTORM_META {
 'queue.batching.database','queue.batching.table','queue.failed.driver','queue.failed.database','queue.failed.table',
 'sanctum.stateful','sanctum.guard','sanctum.expiration','sanctum.token_prefix','sanctum.middleware.authenticate_session',
 'sanctum.middleware.encrypt_cookies','sanctum.middleware.validate_csrf_token','services.postmark.key','services.resend.key','services.ses.key',
-'services.ses.secret','services.ses.region','services.slack.notifications.bot_user_oauth_token','services.slack.notifications.channel','session.driver',
-'session.lifetime','session.expire_on_close','session.encrypt','session.files','session.connection',
-'session.table','session.store','session.lottery','session.cookie','session.path',
-'session.domain','session.secure','session.http_only','session.same_site','session.partitioned',
-'session.serialization','excel.exports.chunk_size','excel.exports.pre_calculate_formulas','excel.exports.strict_null_comparison','excel.exports.csv.delimiter',
-'excel.exports.csv.enclosure','excel.exports.csv.line_ending','excel.exports.csv.use_bom','excel.exports.csv.include_separator_line','excel.exports.csv.excel_compatibility',
-'excel.exports.csv.output_encoding','excel.exports.csv.test_auto_detect','excel.exports.properties.creator','excel.exports.properties.lastModifiedBy','excel.exports.properties.title',
-'excel.exports.properties.description','excel.exports.properties.subject','excel.exports.properties.keywords','excel.exports.properties.category','excel.exports.properties.manager',
-'excel.exports.properties.company','excel.imports.read_only','excel.imports.ignore_empty','excel.imports.heading_row.formatter','excel.imports.csv.delimiter',
-'excel.imports.csv.enclosure','excel.imports.csv.escape_character','excel.imports.csv.contiguous','excel.imports.csv.input_encoding','excel.imports.properties.creator',
-'excel.imports.properties.lastModifiedBy','excel.imports.properties.title','excel.imports.properties.description','excel.imports.properties.subject','excel.imports.properties.keywords',
-'excel.imports.properties.category','excel.imports.properties.manager','excel.imports.properties.company','excel.imports.cells.middleware','excel.extension_detector.xlsx',
-'excel.extension_detector.xlsm','excel.extension_detector.xltx','excel.extension_detector.xltm','excel.extension_detector.xls','excel.extension_detector.xlt',
-'excel.extension_detector.ods','excel.extension_detector.ots','excel.extension_detector.slk','excel.extension_detector.xml','excel.extension_detector.gnumeric',
-'excel.extension_detector.htm','excel.extension_detector.html','excel.extension_detector.csv','excel.extension_detector.tsv','excel.extension_detector.pdf',
-'excel.value_binder.default','excel.cache.driver','excel.cache.batch.memory_limit','excel.cache.illuminate.store','excel.cache.default_ttl',
-'excel.transactions.handler','excel.transactions.db.connection','excel.temporary_files.local_path','excel.temporary_files.local_permissions','excel.temporary_files.remote_disk',
-'excel.temporary_files.remote_prefix','excel.temporary_files.force_resync_remote','data.date_format','data.date_timezone','data.features.cast_and_transform_iterables',
-'data.features.ignore_exception_when_trying_to_set_computed_property_value','data.transformers.DateTimeInterface','data.transformers.Illuminate\\Contracts\\Support\\Arrayable','data.transformers.BackedEnum','data.casts.DateTimeInterface',
-'data.casts.BackedEnum','data.rule_inferrers','data.normalizers','data.wrap','data.var_dumper_caster_mode',
-'data.structure_caching.enabled','data.structure_caching.directories','data.structure_caching.cache.store','data.structure_caching.cache.prefix','data.structure_caching.cache.duration',
-'data.structure_caching.reflection_discovery.enabled','data.structure_caching.reflection_discovery.base_path','data.structure_caching.reflection_discovery.root_namespace','data.validation_strategy','data.name_mapping_strategy.input',
-'data.name_mapping_strategy.output','data.ignore_invalid_partials','data.max_transformation_depth','data.throw_when_max_transformation_depth_reached','data.commands.make.namespace',
-'data.commands.make.suffix','data.livewire.enable_synths','structure-discoverer.ignored_files','structure-discoverer.structure_scout_directories','structure-discoverer.cache.driver',
-'structure-discoverer.cache.store','ide-helper.filename','ide-helper.models_filename','ide-helper.meta_filename','ide-helper.include_fluent',
-'ide-helper.write_query_methods','ide-helper.write_model_magic_where','ide-helper.write_model_external_builder_methods','ide-helper.write_model_relation_count_properties','ide-helper.write_model_relation_exists_properties',
-'ide-helper.write_eloquent_model_mixins','ide-helper.include_helpers','ide-helper.helper_files','ide-helper.model_locations','ide-helper.ignored_models',
-'ide-helper.model_hooks','ide-helper.extra.Eloquent','ide-helper.extra.Session','ide-helper.magic','ide-helper.interfaces',
-'ide-helper.model_camel_case_properties','ide-helper.type_overrides.integer','ide-helper.type_overrides.boolean','ide-helper.include_class_docblocks','ide-helper.force_fqn',
-'ide-helper.use_generics_annotations','ide-helper.macro_default_return_types.Illuminate\\Http\\Client\\Factory','ide-helper.additional_relation_types','ide-helper.additional_relation_return_types','ide-helper.enforce_nullable_relationships',
-'ide-helper.soft_deletes_force_nullable','ide-helper.post_migrate','tinker.commands','tinker.alias','tinker.dont_alias',
-'tinker.trust_project',);
+'services.ses.secret','services.ses.region','services.slack.notifications.bot_user_oauth_token','services.slack.notifications.channel','services.finnhub.key',
+'services.SECURITY_DATA_PROVIDER','services.security_price_refresh_after_hours','session.driver','session.lifetime','session.expire_on_close',
+'session.encrypt','session.files','session.connection','session.table','session.store',
+'session.lottery','session.cookie','session.path','session.domain','session.secure',
+'session.http_only','session.same_site','session.partitioned','session.serialization','excel.exports.chunk_size',
+'excel.exports.pre_calculate_formulas','excel.exports.strict_null_comparison','excel.exports.csv.delimiter','excel.exports.csv.enclosure','excel.exports.csv.line_ending',
+'excel.exports.csv.use_bom','excel.exports.csv.include_separator_line','excel.exports.csv.excel_compatibility','excel.exports.csv.output_encoding','excel.exports.csv.test_auto_detect',
+'excel.exports.properties.creator','excel.exports.properties.lastModifiedBy','excel.exports.properties.title','excel.exports.properties.description','excel.exports.properties.subject',
+'excel.exports.properties.keywords','excel.exports.properties.category','excel.exports.properties.manager','excel.exports.properties.company','excel.imports.read_only',
+'excel.imports.ignore_empty','excel.imports.heading_row.formatter','excel.imports.csv.delimiter','excel.imports.csv.enclosure','excel.imports.csv.escape_character',
+'excel.imports.csv.contiguous','excel.imports.csv.input_encoding','excel.imports.properties.creator','excel.imports.properties.lastModifiedBy','excel.imports.properties.title',
+'excel.imports.properties.description','excel.imports.properties.subject','excel.imports.properties.keywords','excel.imports.properties.category','excel.imports.properties.manager',
+'excel.imports.properties.company','excel.imports.cells.middleware','excel.extension_detector.xlsx','excel.extension_detector.xlsm','excel.extension_detector.xltx',
+'excel.extension_detector.xltm','excel.extension_detector.xls','excel.extension_detector.xlt','excel.extension_detector.ods','excel.extension_detector.ots',
+'excel.extension_detector.slk','excel.extension_detector.xml','excel.extension_detector.gnumeric','excel.extension_detector.htm','excel.extension_detector.html',
+'excel.extension_detector.csv','excel.extension_detector.tsv','excel.extension_detector.pdf','excel.value_binder.default','excel.cache.driver',
+'excel.cache.batch.memory_limit','excel.cache.illuminate.store','excel.cache.default_ttl','excel.transactions.handler','excel.transactions.db.connection',
+'excel.temporary_files.local_path','excel.temporary_files.local_permissions','excel.temporary_files.remote_disk','excel.temporary_files.remote_prefix','excel.temporary_files.force_resync_remote',
+'data.date_format','data.date_timezone','data.features.cast_and_transform_iterables','data.features.ignore_exception_when_trying_to_set_computed_property_value','data.transformers.DateTimeInterface',
+'data.transformers.Illuminate\\Contracts\\Support\\Arrayable','data.transformers.BackedEnum','data.casts.DateTimeInterface','data.casts.BackedEnum','data.rule_inferrers',
+'data.normalizers','data.wrap','data.var_dumper_caster_mode','data.structure_caching.enabled','data.structure_caching.directories',
+'data.structure_caching.cache.store','data.structure_caching.cache.prefix','data.structure_caching.cache.duration','data.structure_caching.reflection_discovery.enabled','data.structure_caching.reflection_discovery.base_path',
+'data.structure_caching.reflection_discovery.root_namespace','data.validation_strategy','data.name_mapping_strategy.input','data.name_mapping_strategy.output','data.ignore_invalid_partials',
+'data.max_transformation_depth','data.throw_when_max_transformation_depth_reached','data.commands.make.namespace','data.commands.make.suffix','data.livewire.enable_synths',
+'structure-discoverer.ignored_files','structure-discoverer.structure_scout_directories','structure-discoverer.cache.driver','structure-discoverer.cache.store','ide-helper.filename',
+'ide-helper.models_filename','ide-helper.meta_filename','ide-helper.include_fluent','ide-helper.write_query_methods','ide-helper.write_model_magic_where',
+'ide-helper.write_model_external_builder_methods','ide-helper.write_model_relation_count_properties','ide-helper.write_model_relation_exists_properties','ide-helper.write_eloquent_model_mixins','ide-helper.include_helpers',
+'ide-helper.helper_files','ide-helper.model_locations','ide-helper.ignored_models','ide-helper.model_hooks','ide-helper.extra.Eloquent',
+'ide-helper.extra.Session','ide-helper.magic','ide-helper.interfaces','ide-helper.model_camel_case_properties','ide-helper.type_overrides.integer',
+'ide-helper.type_overrides.boolean','ide-helper.include_class_docblocks','ide-helper.force_fqn','ide-helper.use_generics_annotations','ide-helper.macro_default_return_types.Illuminate\\Http\\Client\\Factory',
+'ide-helper.additional_relation_types','ide-helper.additional_relation_return_types','ide-helper.enforce_nullable_relationships','ide-helper.soft_deletes_force_nullable','ide-helper.post_migrate',
+'tinker.commands','tinker.alias','tinker.dont_alias','tinker.trust_project',);
         registerArgumentsSet('middleware', 
 'web','api','auth','auth.basic','auth.session',
 'cache.headers','can','guest','password.confirm','precognitive',
 'signed','throttle','verified',);
         registerArgumentsSet('routes', 
-'sanctum.csrf-cookie','portfolios.index','portfolios.store','portfolios.show',
-'portfolios.update','portfolios.destroy','storage.local',
-'storage.local.upload',);
+'sanctum.csrf-cookie',
+'portfolios.index','portfolios.store','portfolios.show','portfolios.update','portfolios.destroy','storage.local','storage.local.upload',);
         registerArgumentsSet('views', 
 'welcome','laravel-exceptions-renderer::components.badge','laravel-exceptions-renderer::components.empty-state','laravel-exceptions-renderer::components.file-with-line','laravel-exceptions-renderer::components.formatted-source',
 'laravel-exceptions-renderer::components.frame','laravel-exceptions-renderer::components.frame-code','laravel-exceptions-renderer::components.header','laravel-exceptions-renderer::components.http-method','laravel-exceptions-renderer::components.icons.alert',
@@ -2586,7 +2605,8 @@ namespace PHPSTORM_META {
 'CACHE_STORE','MEMCACHED_HOST','REDIS_CLIENT','REDIS_HOST','REDIS_PASSWORD',
 'REDIS_PORT','MAIL_MAILER','MAIL_SCHEME','MAIL_HOST','MAIL_PORT',
 'MAIL_USERNAME','MAIL_PASSWORD','MAIL_FROM_ADDRESS','MAIL_FROM_NAME','AWS_ACCESS_KEY_ID',
-'AWS_SECRET_ACCESS_KEY','AWS_DEFAULT_REGION','AWS_BUCKET','AWS_USE_PATH_STYLE_ENDPOINT','VITE_APP_NAME',);
+'AWS_SECRET_ACCESS_KEY','AWS_DEFAULT_REGION','AWS_BUCKET','AWS_USE_PATH_STYLE_ENDPOINT','VITE_APP_NAME',
+'SECURITY_DATA_PROVIDER','FINNHUB_API_KEY',);
         
                 expectedArguments(\Illuminate\Support\Facades\Gate::has(), 0, argumentsSet('auth'));
     expectedArguments(\Illuminate\Support\Facades\Gate::allows(), 0, argumentsSet('auth'));

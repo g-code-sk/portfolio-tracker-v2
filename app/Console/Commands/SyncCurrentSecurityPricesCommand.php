@@ -9,9 +9,9 @@ use Illuminate\Console\Command;
 
 class SyncCurrentSecurityPricesCommand extends Command
 {
-    protected $signature = 'securities:sync-current-prices {--ticker=* : Specific ticker(s) to sync}';
+    protected $signature = 'securities:sync-current-prices {--ticker=* : Specific ticker(s) to sync} {--force : Refresh all scanned prices regardless of last update time}';
 
-    protected $description = 'Fetch and store current prices for securities from Yahoo';
+    protected $description = 'Fetch and store current prices (Finnhub/Yahoo). Without --force, skips symbols updated within SECURITY_PRICE_REFRESH_AFTER_HOURS.';
 
     public function handle(SyncCurrentSecurityPricesAction $syncCurrentSecurityPrices): int
     {
@@ -23,10 +23,10 @@ class SyncCurrentSecurityPricesCommand extends Command
             ->values()
             ->all();
 
-        $summary = $syncCurrentSecurityPrices->execute($tickers);
+        $summary = $syncCurrentSecurityPrices->execute($tickers, (bool) $this->option('force'));
 
         $this->printSummary($summary);
-        $this->printFailedResults($summary);
+        $this->printErrorMessages($summary);
 
         return self::SUCCESS;
     }
@@ -40,20 +40,20 @@ class SyncCurrentSecurityPricesCommand extends Command
         $this->line('Failed: '.$summary->failedCount);
     }
 
-    private function printFailedResults(SyncCurrentSecurityPricesSummaryData $summary): void
+    private function printErrorMessages(SyncCurrentSecurityPricesSummaryData $summary): void
     {
-        $failedResults = collect($summary->results)->filter(
+        $resultsWithError = collect($summary->results)->filter(
             static fn (SyncCurrentSecurityPriceResultData $result): bool => $result->hasFailed
         );
 
-        if ($failedResults->isEmpty()) {
+        if ($resultsWithError->isEmpty()) {
             return;
         }
 
         $this->newLine();
         $this->warn('Failures:');
 
-        $failedResults->each(function (SyncCurrentSecurityPriceResultData $result): void {
+        $resultsWithError->each(function (SyncCurrentSecurityPriceResultData $result): void {
             $this->line(sprintf(
                 '- %s (security_id=%d): %s',
                 $result->ticker,

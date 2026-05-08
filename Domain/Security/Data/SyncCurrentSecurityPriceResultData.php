@@ -13,7 +13,7 @@ final readonly class SyncCurrentSecurityPriceResultData
         public ?string $failureMessage = null,
     ) {}
 
-    public static function skipped(int $securityId, string $ticker): self
+    public static function skipped(int $securityId, string $ticker, ?string $failureMessage = null): self
     {
         return new self(
             securityId: $securityId,
@@ -21,10 +21,11 @@ final readonly class SyncCurrentSecurityPriceResultData
             isUpdated: false,
             isSkipped: true,
             hasFailed: false,
+            failureMessage: $failureMessage,
         );
     }
 
-    public static function updated(int $securityId, string $ticker): self
+    public static function updated(int $securityId, string $ticker, ?string $failureMessage = null): self
     {
         return new self(
             securityId: $securityId,
@@ -32,6 +33,7 @@ final readonly class SyncCurrentSecurityPriceResultData
             isUpdated: true,
             isSkipped: false,
             hasFailed: false,
+            failureMessage: $failureMessage,
         );
     }
 

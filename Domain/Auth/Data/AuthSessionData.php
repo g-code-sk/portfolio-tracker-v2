@@ -2,6 +2,7 @@
 
 namespace Domain\Auth\Data;
 
+use App\Support\ApplicationConfig;
 use Illuminate\Http\Request;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -18,7 +19,7 @@ class AuthSessionData extends Data
 
     public static function active(Request $request): self
     {
-        $lifetimeMinutes = (int) config('session.lifetime', 120);
+        $lifetimeMinutes = app(ApplicationConfig::class)->getSessionLifetimeMinutes();
 
         return new self(
             isActive: true,
@@ -32,7 +33,7 @@ class AuthSessionData extends Data
     {
         return new self(
             isActive: false,
-            lifetimeMinutes: (int) config('session.lifetime', 120),
+            lifetimeMinutes: app(ApplicationConfig::class)->getSessionLifetimeMinutes(),
             expiresAt: null,
             sessionId: null,
         );

@@ -14,11 +14,21 @@ class SyncCurrentSecurityPriceActionTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'services.SECURITY_DATA_PROVIDER' => 'finnhub',
+            'services.finnhub.key' => 'test-finnhub-api-key',
+        ]);
+    }
+
     public function test_it_persists_current_price_fields_for_a_security(): void
     {
         $provider = SecurityDataProvider::query()->create([
-            'code' => SecurityDataProviderCode::Yahoo->value,
-            'name' => 'Yahoo Finance',
+            'code' => SecurityDataProviderCode::Finnhub->value,
+            'name' => 'Finnhub',
         ]);
 
         $security = Security::query()->create([
@@ -28,16 +38,12 @@ class SyncCurrentSecurityPriceActionTest extends TestCase
         ]);
 
         Http::fake([
-            'query1.finance.yahoo.com/*' => Http::response([
-                'quoteResponse' => [
-                    'result' => [
-                        [
-                            'regularMarketPrice' => 190.10,
-                            'currency' => 'USD',
-                            'regularMarketTime' => 1710000000,
-                        ],
-                    ],
-                ],
+            'finnhub.io/api/v1/quote*' => Http::response([
+                'c' => 190.10,
+                't' => 1710000000,
+            ]),
+            'finnhub.io/api/v1/stock/profile2*' => Http::response([
+                'currency' => 'USD',
             ]),
         ]);
 
@@ -63,10 +69,9 @@ class SyncCurrentSecurityPriceActionTest extends TestCase
         ]);
 
         Http::fake([
-            'query1.finance.yahoo.com/*' => Http::response([
-                'quoteResponse' => [
-                    'result' => [],
-                ],
+            'finnhub.io/api/v1/quote*' => Http::response([
+                'c' => 0,
+                't' => 0,
             ]),
         ]);
 

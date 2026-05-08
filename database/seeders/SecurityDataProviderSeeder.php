@@ -21,5 +21,14 @@ class SecurityDataProviderSeeder extends Seeder
                 'name' => 'Yahoo Finance',
             ],
         );
+
+        SecurityDataProvider::query()->updateOrCreate(
+            [
+                'code' => SecurityDataProviderCode::Finnhub->value,
+            ],
+            [
+                'name' => 'Finnhub',
+            ],
+        );
     }
 }

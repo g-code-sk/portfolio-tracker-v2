@@ -6,6 +6,8 @@ enum SecurityDataProviderCode: string
 {
     case Yahoo = 'yahoo';
 
+    case Finnhub = 'finnhub';
+
     /**
      * @return list<string>
      */
@@ -13,6 +15,7 @@ enum SecurityDataProviderCode: string
     {
         return [
             self::Yahoo->value,
+            self::Finnhub->value,
         ];
     }
 }
