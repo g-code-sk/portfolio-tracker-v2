@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Models\Portfolio;
 use App\Policies\PortfolioPolicy;
+use Domain\Security\Contract\CurrentSecurityPriceProviderInterface;
+use Domain\Security\Service\YahooCurrentSecurityPriceProvider;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -14,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(CurrentSecurityPriceProviderInterface::class, YahooCurrentSecurityPriceProvider::class);
     }
 
     /**
