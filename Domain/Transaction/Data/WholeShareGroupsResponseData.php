@@ -12,6 +12,8 @@ class WholeShareGroupsResponseData extends Data
     public function __construct(
         #[DataCollectionOf(WholeShareGroupResponseData::class)]
         public array $groups,
+        public ?string $ticker,
+        public ?string $currencySymbol,
         public ?float $realizedGainLossAmount,
         public ?float $realizedReturnPercent,
     ) {}
@@ -21,6 +23,10 @@ class WholeShareGroupsResponseData extends Data
      */
     public static function fromGroups(array $groups): self
     {
+        $firstGroup = $groups[0] ?? null;
+        $firstBuySegment = $firstGroup?->buyBucket?->segments[0] ?? null;
+        $firstSellSegment = $firstGroup?->sellBucket?->segments[0] ?? null;
+
         $closedGroups = collect($groups)->filter(
             fn (WholeShareGroupResponseData $group): bool => $group->gainLossAmount !== null && $group->weightedBuyPricePerShare !== null
         );
@@ -43,6 +49,8 @@ class WholeShareGroupsResponseData extends Data
 
         return new self(
             groups: $groups,
+            ticker: $firstBuySegment?->ticker ?? $firstSellSegment?->ticker,
+            currencySymbol: $firstSellSegment?->currencySymbol ?? $firstBuySegment?->currencySymbol,
             realizedGainLossAmount: $realizedGainLossAmount,
             realizedReturnPercent: $realizedReturnPercent,
         );

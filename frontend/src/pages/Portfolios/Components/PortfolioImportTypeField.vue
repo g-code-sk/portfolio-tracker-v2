@@ -1,16 +1,9 @@
 <template>
-	<v-select
-		v-model="model"
-		label="Import Type"
-		variant="outlined"
-		hide-details="auto"
-		:items="items"
-		:disabled="isDisabled"
-		:rules="[required]"
-	/>
+	<AppSelectInput v-model="model" label="Import Type" :items="items" :disabled="isDisabled" :rules="[required]" />
 </template>
 
 <script setup lang="ts">
+import AppSelectInput from '@/components/Inputs/AppSelectInput.vue'
 import type { TransactionImportType } from '@/types/generated'
 import { required } from '@/services/rules'
 

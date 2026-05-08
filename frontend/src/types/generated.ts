@@ -92,6 +92,8 @@ isSellTaxable: boolean | null,
 };
 export type WholeShareGroupsResponseData = {
 groups: Array<any>,
+ticker: string | null,
+currencySymbol: string | null,
 realizedGainLossAmount: number | null,
 realizedReturnPercent: number | null,
 };

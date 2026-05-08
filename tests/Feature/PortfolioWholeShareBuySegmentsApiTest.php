@@ -131,6 +131,8 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('message', 'Whole share segments fetched successfully.')
+            ->assertJsonPath('data.ticker', 'XY')
+            ->assertJsonPath('data.currencySymbol', 'USD')
             ->assertJsonCount(2, 'data.groups')
             ->assertJsonPath('data.groups.0.groupIndex', 0)
             ->assertJsonPath('data.groups.1.groupIndex', 1)
@@ -183,6 +185,8 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonCount(1, 'data.groups')
+            ->assertJsonPath('data.ticker', 'ABC')
+            ->assertJsonPath('data.currencySymbol', 'USD')
             ->assertJsonPath('data.groups.0.groupIndex', 0)
             ->assertJsonPath('data.groups.0.buyBucket', null)
             ->assertJsonPath('data.groups.0.sellDate', '2022-06-01T00:00:00+00:00')
@@ -342,6 +346,8 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
 
             $response->assertOk()
                 ->assertJsonCount(2, 'data.groups')
+                ->assertJsonPath('data.ticker', 'GOOGL')
+                ->assertJsonPath('data.currencySymbol', 'USD')
                 ->assertJsonPath('data.groups.0.groupIndex', 0)
                 ->assertJsonPath('data.groups.0.buyDate', '2022-09-01T00:00:00+00:00')
                 ->assertJsonPath('data.groups.0.sellDate', '2024-02-16T00:00:00+00:00')
