@@ -86,12 +86,14 @@ sellDate: string | null,
 holdPeriodDays: number | null,
 weightedBuyPricePerShare: number | null,
 weightedSellPricePerShare: number | null,
-yieldPercent: number | null,
-yieldAmount: number | null,
+returnPercent: number | null,
+gainLossAmount: number | null,
 isSellTaxable: boolean | null,
 };
 export type WholeShareGroupsResponseData = {
 groups: Array<any>,
+realizedGainLossAmount: number | null,
+realizedReturnPercent: number | null,
 };
 export type WholeShareSegmentResponseData = {
 sourceTransactionId: number,

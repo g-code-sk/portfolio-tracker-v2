@@ -14,8 +14,23 @@
 				<v-col cols="12">
 					<v-card rounded="lg" elevation="1">
 						<v-card-item>
-							<v-card-title>Groups</v-card-title>
-							<v-card-subtitle>{{ filteredWholeShareGroups.length }} shown</v-card-subtitle>
+							<div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+								<v-card-title>Groups</v-card-title>
+								<div class="d-flex flex-column flex-sm-row ga-4">
+									<div class="text-sm-right">
+										<div class="text-caption text-medium-emphasis">Realized Gain/Loss</div>
+										<div :class="['text-subtitle-1 font-weight-medium', getGainLossTextClass(wholeShareRealizedGainLossAmount)]">
+											{{ formatGainLossAmount(wholeShareRealizedGainLossAmount, null, null, wholeShareCurrencySymbol) }}
+										</div>
+									</div>
+									<div class="text-sm-right">
+										<div class="text-caption text-medium-emphasis">Realized Return</div>
+										<div :class="['text-subtitle-1 font-weight-medium', getGainLossTextClass(wholeShareRealizedReturnPercent)]">
+											{{ formatReturnPercent(wholeShareRealizedReturnPercent) }}
+										</div>
+									</div>
+								</div>
+							</div>
 						</v-card-item>
 						<v-divider />
 
@@ -82,14 +97,14 @@
 									</template>
 									<template #item.weightedBuyPricePerShare="{ item }">{{ formatDecimalValue(item.weightedBuyPricePerShare) }}</template>
 									<template #item.weightedSellPricePerShare="{ item }">{{ formatDecimalValue(item.weightedSellPricePerShare) }}</template>
-									<template #item.yieldPercent="{ item }">
-										<span :class="getYieldTextClass(item.yieldPercent)">
-											{{ formatYieldPercent(item.yieldPercent) }}
+									<template #item.returnPercent="{ item }">
+										<span :class="getGainLossTextClass(item.returnPercent)">
+											{{ formatReturnPercent(item.returnPercent) }}
 										</span>
 									</template>
-									<template #item.yieldAmount="{ item }">
-										<span :class="getYieldTextClass(item.yieldAmount)">
-											{{ formatYieldAmount(item.yieldAmount, item.buyBucket, item.sellBucket) }}
+									<template #item.gainLossAmount="{ item }">
+										<span :class="getGainLossTextClass(item.gainLossAmount)">
+											{{ formatGainLossAmount(item.gainLossAmount, item.buyBucket, item.sellBucket) }}
 										</span>
 									</template>
 									<template #item.isSellTaxable="{ item }">
@@ -135,6 +150,7 @@ import type {
 	PortfolioResponseData,
 	WholeShareBucketResponseData,
 	WholeShareGroupResponseData,
+	WholeShareGroupsResponseData,
 	WholeShareSegmentResponseData,
 } from '@/types/generated'
 
@@ -143,6 +159,7 @@ const route = useRoute()
 const portfolio = ref<PortfolioResponseData | null>(null)
 const isLoadingPortfolio = ref(false)
 const wholeShareGroups = ref<WholeShareGroupResponseData[]>([])
+const wholeShareGroupsResponse = ref<WholeShareGroupsResponseData | null>(null)
 const isLoadingSegments = ref(false)
 const didWholeShareSegmentsRequestFail = ref(false)
 
@@ -243,6 +260,16 @@ const filteredWholeShareGroups = computed(() => {
 	})
 })
 
+const wholeShareRealizedGainLossAmount = computed(() => wholeShareGroupsResponse.value?.realizedGainLossAmount ?? null)
+const wholeShareRealizedReturnPercent = computed(() => wholeShareGroupsResponse.value?.realizedReturnPercent ?? null)
+const wholeShareCurrencySymbol = computed(() => {
+	const firstGroup = wholeShareGroups.value[0]
+	const firstBuy = firstGroup?.buyBucket?.segments?.[0] as WholeShareSegmentResponseData | undefined
+	const firstSell = firstGroup?.sellBucket?.segments?.[0] as WholeShareSegmentResponseData | undefined
+
+	return firstSell?.currencySymbol ?? firstBuy?.currencySymbol ?? ''
+})
+
 watch(wholeShareGroups, () => {
 	if (selectedBuyYear.value !== null && !availableBuyYears.value.includes(selectedBuyYear.value)) {
 		selectedBuyYear.value = null
@@ -277,8 +304,8 @@ const groupHeaders = [
 	{ title: 'Hold period', key: 'holdPeriodDays' },
 	{ title: 'Weighted buy', key: 'weightedBuyPricePerShare', align: 'end' },
 	{ title: 'Weighted sell', key: 'weightedSellPricePerShare', align: 'end' },
-	{ title: 'Yield %', key: 'yieldPercent', align: 'end' },
-	{ title: 'Yield', key: 'yieldAmount', align: 'end' },
+	{ title: 'Return %', key: 'returnPercent', align: 'end' },
+	{ title: 'Gain/Loss', key: 'gainLossAmount', align: 'end' },
 	{ title: 'Tax-Free', key: 'isSellTaxable', align: 'center' },
 ] as const
 
@@ -290,7 +317,7 @@ const formatDecimalValue = (value: number | null): string => {
 	return value === null ? '—' : formatDecimal(value)
 }
 
-const formatYieldPercent = (value: number | null): string => {
+const formatReturnPercent = (value: number | null): string => {
 	if (value === null) {
 		return '—'
 	}
@@ -300,18 +327,23 @@ const formatYieldPercent = (value: number | null): string => {
 	return `${sign}${formatDecimal(value)}%`
 }
 
-const formatYieldAmount = (value: number | null, buyBucket: WholeShareBucketResponseData | null, sellBucket: WholeShareBucketResponseData | null): string => {
+const formatGainLossAmount = (
+	value: number | null,
+	buyBucket: WholeShareBucketResponseData | null,
+	sellBucket: WholeShareBucketResponseData | null,
+	currencySymbolOverride?: string,
+): string => {
 	if (value === null) {
 		return '—'
 	}
 
 	const sign = value > 0 ? '+' : ''
-	const currencySymbol = sellBucket?.segments?.[0]?.currencySymbol ?? buyBucket?.segments?.[0]?.currencySymbol ?? ''
+	const currencySymbol = currencySymbolOverride ?? sellBucket?.segments?.[0]?.currencySymbol ?? buyBucket?.segments?.[0]?.currencySymbol ?? ''
 
 	return `${sign}${formatDecimal(value)}${currencySymbol ? ` ${currencySymbol}` : ''}`
 }
 
-const getYieldTextClass = (value: number | null): string => {
+const getGainLossTextClass = (value: number | null): string => {
 	if (value === null || value === 0) {
 		return ''
 	}
@@ -335,6 +367,8 @@ const loadPortfolio = async (): Promise<void> => {
 
 const loadWholeShareSegments = async (): Promise<void> => {
 	if (currencyId.value === null) {
+		wholeShareGroupsResponse.value = null
+		wholeShareGroups.value = []
 		didWholeShareSegmentsRequestFail.value = true
 		toast.error('Missing currency for this position.')
 
@@ -346,10 +380,12 @@ const loadWholeShareSegments = async (): Promise<void> => {
 
 	try {
 		const data = await fetchWholeShareSegments(portfolioId.value, securityId.value, currencyId.value)
+		wholeShareGroupsResponse.value = data
 		wholeShareGroups.value = data.groups as WholeShareGroupResponseData[]
 	} catch (error) {
 		console.error('Whole share segments fetch failed', error)
 		toast.error('Something went wrong when loading whole share groups.')
+		wholeShareGroupsResponse.value = null
 		wholeShareGroups.value = []
 		didWholeShareSegmentsRequestFail.value = true
 	} finally {

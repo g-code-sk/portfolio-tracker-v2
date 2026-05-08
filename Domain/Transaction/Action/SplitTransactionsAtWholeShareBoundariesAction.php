@@ -34,7 +34,7 @@ class SplitTransactionsAtWholeShareBoundariesAction
             $buyBuckets = WholeShareBucketPartitionerService::splitToBuckets($buyTransactions);
             $sellBuckets = WholeShareBucketPartitionerService::splitToBuckets($sellTransactions);
 
-            /** @var list<int> $groupIndices */
+            /** @var array<int, int> $groupIndices */
             $groupIndices = collect(array_keys($buyBuckets))
                 ->merge(array_keys($sellBuckets))
                 ->unique()
@@ -52,6 +52,6 @@ class SplitTransactionsAtWholeShareBoundariesAction
             }
         }
 
-        return new WholeShareGroupsResponseData(groups: $groups);
+        return WholeShareGroupsResponseData::fromGroups($groups);
     }
 }

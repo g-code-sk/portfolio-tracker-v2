@@ -52,5 +52,5 @@ export const fetchWholeShareSegments = async (portfolioId: number, securityId: n
 		params: { securityId, currencyId },
 	})
 
-	return data.data ?? { groups: [] }
+	return data.data ?? { groups: [], realizedGainLossAmount: null, realizedReturnPercent: null }
 }

@@ -142,14 +142,16 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
             ->assertJsonPath('data.groups.1.holdPeriodDays', 15)
             ->assertJsonPath('data.groups.0.weightedBuyPricePerShare', 12)
             ->assertJsonPath('data.groups.0.weightedSellPricePerShare', 18)
-            ->assertJsonPath('data.groups.0.yieldPercent', 50)
-            ->assertJsonPath('data.groups.0.yieldAmount', 6)
+            ->assertJsonPath('data.groups.0.returnPercent', 50)
+            ->assertJsonPath('data.groups.0.gainLossAmount', 6)
             ->assertJsonPath('data.groups.0.isSellTaxable', true)
             ->assertJsonPath('data.groups.1.weightedBuyPricePerShare', 10)
             ->assertJsonPath('data.groups.1.weightedSellPricePerShare', 15)
-            ->assertJsonPath('data.groups.1.yieldPercent', 50)
-            ->assertJsonPath('data.groups.1.yieldAmount', 5)
+            ->assertJsonPath('data.groups.1.returnPercent', 50)
+            ->assertJsonPath('data.groups.1.gainLossAmount', 5)
             ->assertJsonPath('data.groups.1.isSellTaxable', true)
+            ->assertJsonPath('data.realizedGainLossAmount', 11)
+            ->assertJsonPath('data.realizedReturnPercent', 50)
             ->assertJsonCount(2, 'data.groups.0.buyBucket.segments')
             ->assertJsonCount(2, 'data.groups.0.sellBucket.segments')
             ->assertJsonCount(1, 'data.groups.1.buyBucket.segments')
@@ -188,9 +190,11 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
             ->assertJsonPath('data.groups.0.holdPeriodDays', null)
             ->assertJsonPath('data.groups.0.weightedBuyPricePerShare', null)
             ->assertJsonPath('data.groups.0.weightedSellPricePerShare', 50)
-            ->assertJsonPath('data.groups.0.yieldPercent', null)
-            ->assertJsonPath('data.groups.0.yieldAmount', null)
-            ->assertJsonPath('data.groups.0.isSellTaxable', null);
+            ->assertJsonPath('data.groups.0.returnPercent', null)
+            ->assertJsonPath('data.groups.0.gainLossAmount', null)
+            ->assertJsonPath('data.groups.0.isSellTaxable', null)
+            ->assertJsonPath('data.realizedGainLossAmount', null)
+            ->assertJsonPath('data.realizedReturnPercent', null);
     }
 
     public function test_it_uses_current_date_for_taxability_when_sell_is_missing(): void
@@ -349,8 +353,10 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
                 ->assertJsonPath('data.groups.1.holdPeriodDays', null)
                 ->assertJsonPath('data.groups.1.weightedBuyPricePerShare', 162.25)
                 ->assertJsonPath('data.groups.1.weightedSellPricePerShare', null)
-                ->assertJsonPath('data.groups.1.yieldPercent', null)
-                ->assertJsonPath('data.groups.1.yieldAmount', null);
+                ->assertJsonPath('data.groups.1.returnPercent', null)
+                ->assertJsonPath('data.groups.1.gainLossAmount', null)
+                ->assertJsonPath('data.realizedGainLossAmount', 20.119)
+                ->assertJsonPath('data.realizedReturnPercent', 16.661559738635702);
         } finally {
             CarbonImmutable::setTestNow();
         }

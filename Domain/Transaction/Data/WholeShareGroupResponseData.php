@@ -19,8 +19,8 @@ class WholeShareGroupResponseData extends Data
         public ?int $holdPeriodDays,
         public ?float $weightedBuyPricePerShare,
         public ?float $weightedSellPricePerShare,
-        public ?float $yieldPercent,
-        public ?float $yieldAmount,
+        public ?float $returnPercent,
+        public ?float $gainLossAmount,
         public ?bool $isSellTaxable,
     ) {}
 
@@ -31,8 +31,8 @@ class WholeShareGroupResponseData extends Data
         $holdPeriodDays = null;
         $weightedBuyPricePerShare = self::resolveWeightedPricePerShare($buyBucket);
         $weightedSellPricePerShare = self::resolveWeightedPricePerShare($sellBucket);
-        $yieldPercent = self::resolveYieldPercent($weightedBuyPricePerShare, $weightedSellPricePerShare);
-        $yieldAmount = self::resolveYieldAmount($buyBucket, $sellBucket);
+        $returnPercent = self::resolveReturnPercent($weightedBuyPricePerShare, $weightedSellPricePerShare);
+        $gainLossAmount = self::resolveGainLossAmount($buyBucket, $sellBucket);
         $isSellTaxable = self::resolveIsSellTaxable($buyDate, $sellDate);
 
         if ($buyDate !== null && $sellDate !== null) {
@@ -48,8 +48,8 @@ class WholeShareGroupResponseData extends Data
             holdPeriodDays: $holdPeriodDays,
             weightedBuyPricePerShare: $weightedBuyPricePerShare,
             weightedSellPricePerShare: $weightedSellPricePerShare,
-            yieldPercent: $yieldPercent,
-            yieldAmount: $yieldAmount,
+            returnPercent: $returnPercent,
+            gainLossAmount: $gainLossAmount,
             isSellTaxable: $isSellTaxable,
         );
     }
@@ -95,7 +95,7 @@ class WholeShareGroupResponseData extends Data
         return $totalAmount / $totalShares;
     }
 
-    private static function resolveYieldPercent(?float $weightedBuyPricePerShare, ?float $weightedSellPricePerShare): ?float
+    private static function resolveReturnPercent(?float $weightedBuyPricePerShare, ?float $weightedSellPricePerShare): ?float
     {
         if ($weightedBuyPricePerShare === null || $weightedSellPricePerShare === null) {
             return null;
@@ -108,7 +108,7 @@ class WholeShareGroupResponseData extends Data
         return (($weightedSellPricePerShare - $weightedBuyPricePerShare) / $weightedBuyPricePerShare) * 100;
     }
 
-    private static function resolveYieldAmount(?WholeShareBucketResponseData $buyBucket, ?WholeShareBucketResponseData $sellBucket): ?float
+    private static function resolveGainLossAmount(?WholeShareBucketResponseData $buyBucket, ?WholeShareBucketResponseData $sellBucket): ?float
     {
         if ($buyBucket === null || $sellBucket === null) {
             return null;
