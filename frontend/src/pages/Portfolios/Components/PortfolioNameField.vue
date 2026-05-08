@@ -1,10 +1,8 @@
 <template>
-	<v-text-field
+	<AppTextField
 		v-model="model"
 		label="Portfolio Name"
 		placeholder="Portfolio name"
-		variant="outlined"
-		hide-details="auto"
 		:disabled="isDisabled"
 		:error-messages="errorMessages"
 		:rules="rules"
@@ -13,6 +11,8 @@
 </template>
 
 <script setup lang="ts">
+import AppTextField from '@/components/Inputs/AppTextField.vue'
+
 withDefaults(
 	defineProps<{
 		isDisabled?: boolean

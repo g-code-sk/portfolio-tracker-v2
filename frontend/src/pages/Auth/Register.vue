@@ -35,7 +35,7 @@
 import { reactive, ref } from 'vue'
 import { toast } from 'vue3-toastify'
 import { useRouter } from 'vue-router'
-import AppTextField from '@/components/AppTextField.vue'
+import AppTextField from '@/components/Inputs/AppTextField.vue'
 import LoginEmailField from '@/pages/Auth/Components/LoginEmailField.vue'
 import LoginPasswordField from '@/pages/Auth/Components/LoginPasswordField.vue'
 import axios from '@/services/axios'

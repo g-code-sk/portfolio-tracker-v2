@@ -15,7 +15,7 @@ class SplitTransactionsAtWholeShareBoundariesAction
     /**
      * @param  Collection<int, Transaction>  $transactionsAscending
      */
-    public function execute(Collection $transactionsAscending): WholeShareGroupsResponseData
+    public function execute(Collection $transactionsAscending, ?string $portfolioName = null): WholeShareGroupsResponseData
     {
         $groups = [];
         $globalGroupIndex = 0;
@@ -52,6 +52,6 @@ class SplitTransactionsAtWholeShareBoundariesAction
             }
         }
 
-        return WholeShareGroupsResponseData::fromGroups($groups);
+        return WholeShareGroupsResponseData::fromGroups($groups, $portfolioName);
     }
 }

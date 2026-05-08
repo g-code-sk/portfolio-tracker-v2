@@ -36,3 +36,17 @@ export const formatDateTime = (dateString: string | null | undefined): string =>
 		second: '2-digit',
 	})
 }
+
+export const getYearFromDateString = (value: string | null | undefined): number | null => {
+	if (!value) {
+		return null
+	}
+
+	const parsedDate = new Date(value)
+
+	if (Number.isNaN(parsedDate.getTime())) {
+		return null
+	}
+
+	return parsedDate.getFullYear()
+}

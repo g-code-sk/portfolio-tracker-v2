@@ -30,7 +30,7 @@ class PortfolioWholeShareBuySegmentsController extends Controller
             ->orderBy('executed_at')
             ->get();
 
-        $data = $splitTransactionsAtWholeShareBoundaries->execute($transactions);
+        $data = $splitTransactionsAtWholeShareBoundaries->execute($transactions, $portfolio->name);
 
         return $apiResponse->make(
             message: 'Whole share segments fetched successfully.',

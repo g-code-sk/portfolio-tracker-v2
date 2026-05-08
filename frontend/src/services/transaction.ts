@@ -1,7 +1,6 @@
 import axios from '@/services/axios'
 import type { ApiSuccessResponse } from '@/types/api'
 import type {
-	PortfolioTransactionResponseData,
 	PortfolioTransactionsResponseData,
 	TransactionImportPayloadData,
 	TransactionImportType,
@@ -33,7 +32,7 @@ export const uploadTransactionImport = async (portfolioId: number, payload: Tran
 	})
 }
 
-export const fetchPositionTransactions = async (portfolioId: number, securityId: number, currencyId: number | null): Promise<PortfolioTransactionResponseData[]> => {
+export const fetchPositionTransactions = async (portfolioId: number, securityId: number, currencyId: number | null): Promise<PortfolioTransactionsResponseData> => {
 	const params: { securityId: number; currencyId?: number } = { securityId }
 
 	if (currencyId !== null) {
@@ -44,7 +43,13 @@ export const fetchPositionTransactions = async (portfolioId: number, securityId:
 		params,
 	})
 
-	return data.data?.transactions ?? []
+	return data.data ?? {
+		transactions: [],
+		portfolioName: null,
+		securityTicker: null,
+		securityName: null,
+		currencySymbol: null,
+	}
 }
 
 export const fetchWholeShareSegments = async (portfolioId: number, securityId: number, currencyId: number): Promise<WholeShareGroupsResponseData> => {
@@ -52,5 +57,12 @@ export const fetchWholeShareSegments = async (portfolioId: number, securityId: n
 		params: { securityId, currencyId },
 	})
 
-	return data.data ?? { groups: [], realizedGainLossAmount: null, realizedReturnPercent: null }
+	return data.data ?? {
+		groups: [],
+		portfolioName: null,
+		ticker: null,
+		currencySymbol: null,
+		realizedGainLossAmount: null,
+		realizedReturnPercent: null,
+	}
 }

@@ -2,6 +2,7 @@
 
 namespace Domain\Portfolio\Data;
 
+use App\Models\Transaction;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -20,4 +21,20 @@ class PortfolioTransactionResponseData extends Data
         public string $currencySymbol,
         public string $executedAt,
     ) {}
+
+    public static function fromTransaction(Transaction $transaction): self
+    {
+        return new self(
+            id: $transaction->id,
+            externalTransactionId: $transaction->external_transaction_id ?? '',
+            ticker: $transaction->security->ticker,
+            name: $transaction->security->name,
+            typeCode: $transaction->type->code->value,
+            numberOfShares: (float) $transaction->number_of_shares,
+            pricePerShare: (float) $transaction->price_per_share,
+            totalAmount: (float) $transaction->number_of_shares * (float) $transaction->price_per_share,
+            currencySymbol: $transaction->currency->symbol,
+            executedAt: $transaction->executed_at->toIso8601String(),
+        );
+    }
 }

@@ -12,5 +12,9 @@ class PortfolioTransactionsResponseData extends Data
     public function __construct(
         #[DataCollectionOf(PortfolioTransactionResponseData::class)]
         public array $transactions,
+        public ?string $portfolioName,
+        public ?string $securityTicker,
+        public ?string $securityName,
+        public ?string $currencySymbol,
     ) {}
 }
