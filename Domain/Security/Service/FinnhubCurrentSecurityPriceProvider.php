@@ -3,23 +3,23 @@
 namespace Domain\Security\Service;
 
 use App\Support\ApplicationConfig;
-use Carbon\CarbonImmutable;
 use Domain\Security\Contract\CurrentSecurityPriceProviderInterface;
 use Domain\Security\Data\CurrentSecurityPriceData;
+use Domain\Security\Data\FinnhubQuoteData;
+use Domain\Security\Data\FinnhubSymbolSearchHitData;
 use Domain\Security\Enums\SecurityDataProviderCode;
-use Illuminate\Support\Facades\Http;
+use Finnhub\Api\DefaultApi;
+use Throwable;
 
 class FinnhubCurrentSecurityPriceProvider implements CurrentSecurityPriceProviderInterface
 {
-    private const string QUOTE_URL = 'https://finnhub.io/api/v1/quote';
-
-    private const string PROFILE_URL = 'https://finnhub.io/api/v1/stock/profile2';
-
     public function __construct(
-        private readonly ApplicationConfig $applicationConfig
+        private readonly ApplicationConfig $applicationConfig,
+        private readonly DefaultApi $finnhubClient,
+        private readonly FinnhubSymbolSearchHitMatcher $symbolSearchHitMatcher,
     ) {}
 
-    public function getCurrentPrice(string $ticker): ?CurrentSecurityPriceData
+    public function fetchCurrentPriceData(string $ticker, ?string $name = null, ?string $isin = null): ?CurrentSecurityPriceData
     {
         $normalizedTicker = trim($ticker);
 
@@ -33,72 +33,145 @@ class FinnhubCurrentSecurityPriceProvider implements CurrentSecurityPriceProvide
             return null;
         }
 
-        $quoteResponse = Http::acceptJson()
-            ->retry(2, 200)
-            ->timeout(10)
-            ->get(self::QUOTE_URL, [
-                'symbol' => $normalizedTicker,
-                'token' => $apiKey,
-            ]);
+        $tickerUpper = strtoupper($normalizedTicker);
+        $normalizedName = $name !== null ? trim($name) : null;
+        $normalizedIsin = $isin !== null ? strtoupper(trim($isin)) : null;
 
-        print_r($quoteResponse->body());
+        if ($normalizedIsin === '') {
+            $normalizedIsin = null;
+        }
 
-        if (! $quoteResponse->successful()) {
+        $symbolForQuote = $normalizedTicker;
+
+        $quote = $this->fetchQuote($symbolForQuote);
+
+        if ($quote === null || $quote->isEmpty()) {
+            $resolved = $this->resolveSymbolViaSearch($tickerUpper, $normalizedName, $normalizedIsin);
+
+            if ($resolved === null) {
+                return null;
+            }
+
+            $symbolForQuote = $resolved;
+            $quote = $this->fetchQuote($symbolForQuote);
+
+            if ($quote === null || $quote->isEmpty()) {
+                return null;
+            }
+        }
+
+        if (! $quote->hasPrice()) {
             return null;
         }
 
-        /** @var array<string, mixed> $quotePayload */
-        $quotePayload = $quoteResponse->json();
-        $price = data_get($quotePayload, 'c');
-        $quotedAtUnix = data_get($quotePayload, 't');
-
-        if (! is_numeric($price)) {
-            return null;
-        }
-
-        $priceFloat = (float) $price;
-
-        if ($priceFloat === 0.0 && (is_numeric($quotedAtUnix) ? (int) $quotedAtUnix === 0 : true)) {
-            return null;
-        }
-
-        $currency = $this->fetchProfileCurrency($normalizedTicker, $apiKey);
+        $currency = $this->fetchProfileCurrency($symbolForQuote);
 
         if ($currency === null) {
             return null;
         }
 
-        if (is_numeric($quotedAtUnix) && (int) $quotedAtUnix > 0) {
-            $quotedAt = CarbonImmutable::createFromTimestampUTC((int) $quotedAtUnix);
-        } else {
-            $quotedAt = CarbonImmutable::now('UTC');
-        }
-
         return new CurrentSecurityPriceData(
             ticker: $normalizedTicker,
-            price: number_format($priceFloat, 10, '.', ''),
+            price: $quote->getFormattedCurrentPrice(),
             currency: strtoupper($currency),
-            quotedAt: $quotedAt,
+            quotedAt: $quote->getQuotedAt(),
             providerCode: SecurityDataProviderCode::Finnhub,
         );
     }
 
-    private function fetchProfileCurrency(string $normalizedTicker, string $apiKey): ?string
+    private function fetchQuote(string $symbol): ?FinnhubQuoteData
     {
-        $profileResponse = Http::acceptJson()
-            ->retry(2, 200)
-            ->timeout(10)
-            ->get(self::PROFILE_URL, [
-                'symbol' => $normalizedTicker,
-                'token' => $apiKey,
-            ]);
-
-        if (! $profileResponse->successful()) {
+        try {
+            $quote = $this->finnhubClient->quote($symbol);
+        } catch (Throwable) {
             return null;
         }
 
-        /** @var array<string, mixed> $profilePayload */
-        $profilePayload = $profileResponse->json();
+        if (! is_array($quote)) {
+            return null;
+        }
+
+        return FinnhubQuoteData::fromPayload($quote);
+    }
+
+    private function resolveSymbolViaSearch(string $tickerUpper, ?string $normalizedName, ?string $normalizedIsin): ?string
+    {
+        /** @var array<int, string> $queries */
+        $queries = [];
+
+        if ($normalizedIsin !== null) {
+            $queries[] = $normalizedIsin;
+        }
+
+        if ($normalizedName !== null && $normalizedName !== '') {
+            $queries[] = $normalizedName;
+        }
+
+        $queries[] = $tickerUpper;
+
+        foreach ($queries as $query) {
+            $hits = $this->fetchSearchHits($query);
+            $symbols = $this->symbolSearchHitMatcher->matchSymbolsFromHits($hits, $tickerUpper, $normalizedIsin, $normalizedName);
+
+            if (count($symbols) === 1) {
+                return $symbols[0];
+            }
+
+            if (count($symbols) > 1) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<FinnhubSymbolSearchHitData>
+     */
+    private function fetchSearchHits(string $query): array
+    {
+        try {
+            $payload = $this->finnhubClient->symbolSearch($query);
+        } catch (Throwable) {
+            return [];
+        }
+
+        if (! is_array($payload)) {
+            return [];
+        }
+
+        $result = data_get($payload, 'result');
+
+        if (! is_array($result)) {
+            return [];
+        }
+
+        /** @var list<FinnhubSymbolSearchHitData> $hits */
+        $hits = [];
+
+        foreach ($result as $row) {
+            $hit = FinnhubSymbolSearchHitData::tryFromRow($row);
+
+            if ($hit !== null) {
+                $hits[] = $hit;
+            }
+        }
+
+        return $hits;
+    }
+
+    private function fetchProfileCurrency(string $symbol): ?string
+    {
+        try {
+            $profilePayload = $this->finnhubClient->companyProfile2($symbol);
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (! is_array($profilePayload)) {
+            return null;
+        }
+
         $currency = data_get($profilePayload, 'currency');
 
         if (! is_string($currency) || $currency === '') {

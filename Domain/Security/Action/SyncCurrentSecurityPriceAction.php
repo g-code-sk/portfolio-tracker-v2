@@ -21,7 +21,11 @@ class SyncCurrentSecurityPriceAction
         }
 
         try {
-            $currentPriceData = $this->currentSecurityPriceProvider->getCurrentPrice($security->ticker);
+            $currentPriceData = $this->currentSecurityPriceProvider->fetchCurrentPriceData(
+                $security->ticker,
+                $security->name,
+                $security->isin,
+            );
 
             if ($currentPriceData === null) {
                 return SyncCurrentSecurityPriceResultData::skipped($security->id, $security->ticker, 'Current price data is null');

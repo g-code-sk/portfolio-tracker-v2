@@ -12,7 +12,7 @@ class YahooCurrentSecurityPriceProvider implements CurrentSecurityPriceProviderI
 {
     private const string QUOTE_URL = 'https://query1.finance.yahoo.com/v7/finance/quote';
 
-    public function getCurrentPrice(string $ticker): ?CurrentSecurityPriceData
+    public function fetchCurrentPriceData(string $ticker, ?string $name = null, ?string $isin = null): ?CurrentSecurityPriceData
     {
         $normalizedTicker = trim($ticker);
 

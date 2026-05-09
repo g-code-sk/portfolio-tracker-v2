@@ -9,6 +9,9 @@ use Domain\Security\Contract\CurrentSecurityPriceProviderInterface;
 use Domain\Security\Enums\SecurityDataProviderCode;
 use Domain\Security\Service\FinnhubCurrentSecurityPriceProvider;
 use Domain\Security\Service\YahooCurrentSecurityPriceProvider;
+use Finnhub\Api\DefaultApi;
+use Finnhub\Configuration;
+use GuzzleHttp\Client;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -22,6 +25,19 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(ApplicationConfig::class);
+        $this->app->singleton(DefaultApi::class, function (Application $app): DefaultApi {
+            /** @var ApplicationConfig $applicationConfig */
+            $applicationConfig = $app->make(ApplicationConfig::class);
+
+            $finnhubConfiguration = Configuration::getDefaultConfiguration();
+            $apiKey = $applicationConfig->getFinnhubApiKey();
+
+            if ($apiKey !== null) {
+                $finnhubConfiguration->setApiKey('token', $apiKey);
+            }
+
+            return new DefaultApi(new Client, $finnhubConfiguration);
+        });
 
         $this->app->bind(CurrentSecurityPriceProviderInterface::class, function (Application $app): CurrentSecurityPriceProviderInterface {
             /** @var ApplicationConfig $applicationConfig */

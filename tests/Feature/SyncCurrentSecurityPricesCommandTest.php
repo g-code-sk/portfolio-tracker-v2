@@ -5,14 +5,23 @@ namespace Tests\Feature;
 use App\Models\Security;
 use App\Models\SecurityDataProvider;
 use Domain\Security\Enums\SecurityDataProviderCode;
+use Finnhub\Api\DefaultApi;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Http;
+use Mockery;
+use Mockery\MockInterface;
 use Tests\TestCase;
 
 class SyncCurrentSecurityPricesCommandTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+
+        parent::tearDown();
+    }
 
     protected function setUp(): void
     {
@@ -44,32 +53,44 @@ class SyncCurrentSecurityPricesCommandTest extends TestCase
             'isin' => 'US5949181045',
         ]);
 
-        Http::fake(function ($request) {
-            $uri = $request->url();
+        $this->mockFinnhubClient(function (MockInterface $client): void {
+            $client->shouldReceive('quote')
+                ->once()
+                ->with('AAPL')
+                ->andReturn([
+                    'c' => 200.00,
+                    't' => 1710000000,
+                ]);
 
-            if (str_contains($uri, '/api/v1/quote')) {
-                $symbol = $request['symbol'] ?? '';
+            $client->shouldReceive('companyProfile2')
+                ->once()
+                ->with('AAPL')
+                ->andReturn([
+                    'currency' => 'USD',
+                ]);
 
-                if ($symbol === 'AAPL') {
-                    return Http::response([
-                        'c' => 200.00,
-                        't' => 1710000000,
-                    ]);
-                }
-
-                return Http::response([
+            $client->shouldReceive('quote')
+                ->once()
+                ->with('MSFT')
+                ->andReturn([
                     'c' => 0,
                     't' => 0,
                 ]);
-            }
 
-            if (str_contains($uri, '/stock/profile2')) {
-                return Http::response([
-                    'currency' => 'USD',
-                ]);
-            }
+            $client->shouldReceive('symbolSearch')
+                ->once()
+                ->with('US5949181045')
+                ->andReturn(['result' => []]);
 
-            return Http::response([], 404);
+            $client->shouldReceive('symbolSearch')
+                ->once()
+                ->with('Microsoft Corp.')
+                ->andReturn(['result' => []]);
+
+            $client->shouldReceive('symbolSearch')
+                ->once()
+                ->with('MSFT')
+                ->andReturn(['result' => []]);
         });
 
         $this->artisan('securities:sync-current-prices', [
@@ -108,7 +129,11 @@ class SyncCurrentSecurityPricesCommandTest extends TestCase
             'current_price_updated_at' => Carbon::now(),
         ]);
 
-        Http::fake();
+        $this->mockFinnhubClient(function (MockInterface $client): void {
+            $client->shouldNotReceive('quote');
+            $client->shouldNotReceive('symbolSearch');
+            $client->shouldNotReceive('companyProfile2');
+        });
 
         $this->artisan('securities:sync-current-prices', [
             '--ticker' => ['AAPL'],
@@ -118,8 +143,6 @@ class SyncCurrentSecurityPricesCommandTest extends TestCase
             ->expectsOutput('Skipped: 1')
             ->expectsOutput('Failed: 0')
             ->assertSuccessful();
-
-        Http::assertNothingSent();
 
         $security->refresh();
         $this->assertSame('180.0000000000', $security->current_price);
@@ -141,23 +164,21 @@ class SyncCurrentSecurityPricesCommandTest extends TestCase
             'current_price_updated_at' => Carbon::now(),
         ]);
 
-        Http::fake(function ($request) {
-            $uri = $request->url();
-
-            if (str_contains($uri, '/api/v1/quote')) {
-                return Http::response([
+        $this->mockFinnhubClient(function (MockInterface $client): void {
+            $client->shouldReceive('quote')
+                ->once()
+                ->with('AAPL')
+                ->andReturn([
                     'c' => 199.99,
                     't' => 1710000000,
                 ]);
-            }
 
-            if (str_contains($uri, '/stock/profile2')) {
-                return Http::response([
+            $client->shouldReceive('companyProfile2')
+                ->once()
+                ->with('AAPL')
+                ->andReturn([
                     'currency' => 'USD',
                 ]);
-            }
-
-            return Http::response([], 404);
         });
 
         $this->artisan('securities:sync-current-prices', [
@@ -172,5 +193,16 @@ class SyncCurrentSecurityPricesCommandTest extends TestCase
 
         $security->refresh();
         $this->assertSame('199.9900000000', $security->current_price);
+    }
+
+    /**
+     * @param  callable(MockInterface): void  $expectations
+     */
+    private function mockFinnhubClient(callable $expectations): void
+    {
+        $client = Mockery::mock(DefaultApi::class);
+        $expectations($client);
+
+        $this->app->instance(DefaultApi::class, $client);
     }
 }

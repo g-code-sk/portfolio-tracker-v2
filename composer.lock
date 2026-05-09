@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "462b67c6ac0e095fa4de0f342562c20c",
+    "content-hash": "2ddbaf3289b0e99280a53779f81b289b",
     "packages": [
         {
             "name": "brick/math",
@@ -772,6 +772,41 @@
                 "source": "https://github.com/ezyang/htmlpurifier/tree/v4.19.0"
             },
             "time": "2025-10-17T16:34:55+00:00"
+        },
+        {
+            "name": "finnhub/client",
+            "version": "v2.0.11",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Finnhub-Stock-API/finnhub-php.git",
+                "reference": "49be08f39a5d46b1be73033af17a01073a82a505"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Finnhub-Stock-API/finnhub-php/zipball/49be08f39a5d46b1be73033af17a01073a82a505",
+                "reference": "49be08f39a5d46b1be73033af17a01073a82a505",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^6.2 || ^7.0",
+                "php": ">=5.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Finnhub\\": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Finnhub API client",
+            "support": {
+                "issues": "https://github.com/Finnhub-Stock-API/finnhub-php/issues",
+                "source": "https://github.com/Finnhub-Stock-API/finnhub-php/tree/v2.0.11"
+            },
+            "time": "2026-04-21T06:53:35+00:00"
         },
         {
             "name": "fruitcake/php-cors",

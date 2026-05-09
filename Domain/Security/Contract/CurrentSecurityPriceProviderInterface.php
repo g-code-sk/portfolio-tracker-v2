@@ -6,5 +6,5 @@ use Domain\Security\Data\CurrentSecurityPriceData;
 
 interface CurrentSecurityPriceProviderInterface
 {
-    public function getCurrentPrice(string $ticker): ?CurrentSecurityPriceData;
+    public function fetchCurrentPriceData(string $ticker, ?string $name = null, ?string $isin = null): ?CurrentSecurityPriceData;
 }

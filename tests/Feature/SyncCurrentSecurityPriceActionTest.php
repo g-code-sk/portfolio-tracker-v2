@@ -6,13 +6,22 @@ use App\Models\Security;
 use App\Models\SecurityDataProvider;
 use Domain\Security\Action\SyncCurrentSecurityPriceAction;
 use Domain\Security\Enums\SecurityDataProviderCode;
+use Finnhub\Api\DefaultApi;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
+use Mockery;
+use Mockery\MockInterface;
 use Tests\TestCase;
 
 class SyncCurrentSecurityPriceActionTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+
+        parent::tearDown();
+    }
 
     protected function setUp(): void
     {
@@ -37,15 +46,22 @@ class SyncCurrentSecurityPriceActionTest extends TestCase
             'isin' => 'US0378331005',
         ]);
 
-        Http::fake([
-            'finnhub.io/api/v1/quote*' => Http::response([
+        $this->mockFinnhubClient(function (MockInterface $client): void {
+            $client->shouldReceive('quote')
+                ->once()
+                ->with('AAPL')
+                ->andReturn([
                 'c' => 190.10,
                 't' => 1710000000,
-            ]),
-            'finnhub.io/api/v1/stock/profile2*' => Http::response([
+            ]);
+
+            $client->shouldReceive('companyProfile2')
+                ->once()
+                ->with('AAPL')
+                ->andReturn([
                 'currency' => 'USD',
-            ]),
-        ]);
+            ]);
+        });
 
         $result = app(SyncCurrentSecurityPriceAction::class)->execute($security);
 
@@ -68,17 +84,45 @@ class SyncCurrentSecurityPriceActionTest extends TestCase
             'name' => 'Unknown Inc.',
         ]);
 
-        Http::fake([
-            'finnhub.io/api/v1/quote*' => Http::response([
+        $this->mockFinnhubClient(function (MockInterface $client): void {
+            $client->shouldReceive('quote')
+                ->once()
+                ->with('UNKNOWN')
+                ->andReturn([
                 'c' => 0,
                 't' => 0,
-            ]),
-        ]);
+            ]);
+
+            $client->shouldReceive('symbolSearch')
+                ->once()
+                ->with('Unknown Inc.')
+                ->andReturn([
+                'result' => [],
+            ]);
+
+            $client->shouldReceive('symbolSearch')
+                ->once()
+                ->with('UNKNOWN')
+                ->andReturn([
+                'result' => [],
+            ]);
+        });
 
         $result = app(SyncCurrentSecurityPriceAction::class)->execute($security);
 
         $this->assertFalse($result->isUpdated);
         $this->assertTrue($result->isSkipped);
         $this->assertFalse($result->hasFailed);
+    }
+
+    /**
+     * @param  callable(MockInterface): void  $expectations
+     */
+    private function mockFinnhubClient(callable $expectations): void
+    {
+        $client = Mockery::mock(DefaultApi::class);
+        $expectations($client);
+
+        $this->app->instance(DefaultApi::class, $client);
     }
 }

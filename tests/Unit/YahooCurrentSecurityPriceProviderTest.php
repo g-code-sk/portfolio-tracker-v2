@@ -27,7 +27,7 @@ class YahooCurrentSecurityPriceProviderTest extends TestCase
         ]);
 
         $provider = new YahooCurrentSecurityPriceProvider;
-        $result = $provider->getCurrentPrice('AAPL');
+        $result = $provider->fetchCurrentPriceData('AAPL');
 
         $this->assertNotNull($result);
         $this->assertSame('AAPL', $result->ticker);
@@ -53,6 +53,6 @@ class YahooCurrentSecurityPriceProviderTest extends TestCase
 
         $provider = new YahooCurrentSecurityPriceProvider;
 
-        $this->assertNull($provider->getCurrentPrice('AAPL'));
+        $this->assertNull($provider->fetchCurrentPriceData('AAPL'));
     }
 }
