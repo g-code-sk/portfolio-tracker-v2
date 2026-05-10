@@ -5,7 +5,7 @@ namespace Tests\Unit;
 use Carbon\CarbonImmutable;
 use Domain\Security\Data\CurrentSecurityPriceLookupInputData;
 use Domain\Security\Enums\SecurityDataProviderCode;
-use Domain\Security\Service\YahooCurrentSecurityPriceProvider;
+use Domain\Security\Service\YahooFetchCurrentSecurityPriceService;
 use Mockery;
 use Mockery\MockInterface;
 use Scheb\YahooFinanceApi\ApiClient;
@@ -34,7 +34,7 @@ class YahooCurrentSecurityPriceProviderTest extends TestCase
                 ]));
         });
 
-        $provider = $this->app->make(YahooCurrentSecurityPriceProvider::class);
+        $provider = $this->app->make(YahooFetchCurrentSecurityPriceService::class);
         $lookup = CurrentSecurityPriceLookupInputData::tryFrom('AAPL', null, null);
         $this->assertNotNull($lookup);
         $result = $provider->fetchCurrentPriceData($lookup);
@@ -58,7 +58,7 @@ class YahooCurrentSecurityPriceProviderTest extends TestCase
                 ]));
         });
 
-        $provider = $this->app->make(YahooCurrentSecurityPriceProvider::class);
+        $provider = $this->app->make(YahooFetchCurrentSecurityPriceService::class);
         $lookup = CurrentSecurityPriceLookupInputData::tryFrom('AAPL', null, null);
         $this->assertNotNull($lookup);
 

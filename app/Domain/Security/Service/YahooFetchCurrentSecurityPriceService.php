@@ -12,7 +12,7 @@ use Scheb\YahooFinanceApi\ApiClient;
 use Scheb\YahooFinanceApi\Exception\ApiException;
 use Scheb\YahooFinanceApi\Results\Quote;
 
-class YahooCurrentSecurityPriceProvider implements CurrentSecurityPriceProviderInterface
+class YahooFetchCurrentSecurityPriceService implements CurrentSecurityPriceProviderInterface
 {
     public function __construct(
         private readonly ApiClient $apiClient,

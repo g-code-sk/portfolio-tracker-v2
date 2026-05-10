@@ -5,7 +5,7 @@ namespace Tests\Unit;
 use Carbon\CarbonImmutable;
 use Domain\Security\Data\CurrentSecurityPriceLookupInputData;
 use Domain\Security\Enums\SecurityDataProviderCode;
-use Domain\Security\Service\FinnhubCurrentSecurityPriceProvider;
+use Domain\Security\Service\FinnhubFetchCurrentSecurityPriceService;
 use Finnhub\Api\DefaultApi;
 use Mockery;
 use Mockery\MockInterface;
@@ -57,7 +57,7 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ]);
         });
 
-        $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
+        $provider = $this->app->make(FinnhubFetchCurrentSecurityPriceService::class);
         $result = $provider->fetchCurrentPriceData($this->lookup('AAPL'));
 
         $this->assertNotNull($result);
@@ -87,7 +87,7 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ]);
         });
 
-        $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
+        $provider = $this->app->make(FinnhubFetchCurrentSecurityPriceService::class);
 
         $this->assertNull($provider->fetchCurrentPriceData($this->lookup('FOO')));
     }
@@ -111,7 +111,7 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ]);
         });
 
-        $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
+        $provider = $this->app->make(FinnhubFetchCurrentSecurityPriceService::class);
 
         $this->assertNull($provider->fetchCurrentPriceData($this->lookup('UNKNOWN')));
     }
@@ -158,7 +158,7 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ]);
         });
 
-        $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
+        $provider = $this->app->make(FinnhubFetchCurrentSecurityPriceService::class);
         $result = $provider->fetchCurrentPriceData($this->lookup('FL', 'Foot Locker Inc.', 'US3448491049'));
 
         $this->assertNotNull($result);
@@ -200,7 +200,7 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ]);
         });
 
-        $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
+        $provider = $this->app->make(FinnhubFetchCurrentSecurityPriceService::class);
 
         $this->assertNull($provider->fetchCurrentPriceData($this->lookup('FL')));
     }
@@ -254,7 +254,7 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ]);
         });
 
-        $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
+        $provider = $this->app->make(FinnhubFetchCurrentSecurityPriceService::class);
         $result = $provider->fetchCurrentPriceData($this->lookup('FL', 'Foot Locker Inc.', 'US3448491049'));
 
         $this->assertNotNull($result);
@@ -310,7 +310,7 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ]);
         });
 
-        $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
+        $provider = $this->app->make(FinnhubFetchCurrentSecurityPriceService::class);
         $result = $provider->fetchCurrentPriceData($this->lookup('FL', 'Foot Locker Inc.'));
 
         $this->assertNotNull($result);
@@ -328,7 +328,7 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
             $client->shouldNotReceive('companyProfile2');
         });
 
-        $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
+        $provider = $this->app->make(FinnhubFetchCurrentSecurityPriceService::class);
 
         $this->assertNull($provider->fetchCurrentPriceData($this->lookup('AAPL')));
     }

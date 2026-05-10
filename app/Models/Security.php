@@ -44,6 +44,11 @@ class Security extends Model
         return $this->hasMany(Transaction::class);
     }
 
+    public function splits(): HasMany
+    {
+        return $this->hasMany(SecuritySplit::class);
+    }
+
     public function currentDataProvider(): BelongsTo
     {
         return $this->belongsTo(SecurityDataProvider::class, 'current_data_provider_id');

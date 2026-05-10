@@ -12,7 +12,7 @@ use Domain\Security\Enums\SecurityDataProviderCode;
 use Finnhub\Api\DefaultApi;
 use Throwable;
 
-class FinnhubCurrentSecurityPriceProvider implements CurrentSecurityPriceProviderInterface
+class FinnhubFetchCurrentSecurityPriceService implements CurrentSecurityPriceProviderInterface
 {
     public function __construct(
         private readonly ApplicationConfig $applicationConfig,

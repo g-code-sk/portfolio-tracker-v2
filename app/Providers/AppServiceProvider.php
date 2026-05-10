@@ -6,9 +6,11 @@ use App\Models\Portfolio;
 use App\Policies\PortfolioPolicy;
 use App\Support\ApplicationConfig;
 use Domain\Security\Contract\CurrentSecurityPriceProviderInterface;
+use Domain\Security\Contract\SplitHistoryProviderInterface;
 use Domain\Security\Enums\SecurityDataProviderCode;
-use Domain\Security\Service\FinnhubCurrentSecurityPriceProvider;
-use Domain\Security\Service\YahooCurrentSecurityPriceProvider;
+use Domain\Security\Service\FinnhubFetchCurrentSecurityPriceService;
+use Domain\Security\Service\YahooFetchCurrentSecurityPriceService;
+use Domain\Security\Service\YahooSplitHistoryProvider;
 use Finnhub\Api\DefaultApi;
 use Finnhub\Configuration;
 use GuzzleHttp\Client;
@@ -56,13 +58,16 @@ class AppServiceProvider extends ServiceProvider
             retryDelay: 1000,
         ));
 
+        // Future: select implementation via config e.g. services.security_split_provider (yahoo|…).
+        $this->app->bind(SplitHistoryProviderInterface::class, YahooSplitHistoryProvider::class);
+
         $this->app->bind(CurrentSecurityPriceProviderInterface::class, function (Application $app): CurrentSecurityPriceProviderInterface {
             /** @var ApplicationConfig $applicationConfig */
             $applicationConfig = $app->make(ApplicationConfig::class);
 
             return match ($applicationConfig->getSecurityDataProviderCode()) {
-                SecurityDataProviderCode::Finnhub => $app->make(FinnhubCurrentSecurityPriceProvider::class),
-                SecurityDataProviderCode::Yahoo => $app->make(YahooCurrentSecurityPriceProvider::class),
+                SecurityDataProviderCode::Finnhub => $app->make(FinnhubFetchCurrentSecurityPriceService::class),
+                SecurityDataProviderCode::Yahoo => $app->make(YahooFetchCurrentSecurityPriceService::class),
 
                 default => throw new RuntimeException(sprintf(
                     'Unsupported services.SECURITY_DATA_PROVIDER "%s". Use: finnhub, yahoo.',
