@@ -13,7 +13,7 @@ class TypeScriptTransformerServiceProvider extends BaseTypeScriptTransformerServ
     protected function configure(TypeScriptTransformerConfigFactory $config): void
     {
         $directoriesToTransform = [
-            base_path('Domain'),
+            app_path('Domain'),
         ];
 
         if (is_dir(app_path('Data'))) {

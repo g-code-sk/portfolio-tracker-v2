@@ -5,7 +5,7 @@ Use this file as the default operating guide for every development session in th
 ## Stack Baseline
 
 - Backend: Laravel API in repository root.
-- Domain modules: `Domain/<Feature>/...` for feature controllers/data/actions (models stay in `app/Models`).
+- Domain modules: `app/Domain/<Feature>/...` for feature controllers/data/actions (models stay in `app/Models`).
 - Shared services: `app/Services` for reusable cross-domain helpers.
 - Frontend: Vue + Vuetify app in `frontend/` (see `SETUP_FRONTEND_VUE_VUETIFY.md` for forms, rules, toasts, and API error patterns; register/login live under `frontend/src/pages/Auth/`). Use `@/` imports for `src/` modules.
 - API route source: `routes/api.php`.

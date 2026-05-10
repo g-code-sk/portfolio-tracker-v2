@@ -7,7 +7,7 @@ This repository uses Laravel as the backend API layer.
 - Framework: Laravel (API + web routes configured)
 - Entry configuration: `bootstrap/app.php`
 - API routes: `routes/api.php`
-- Domain code location: `Domain/<Feature>/...` (feature controllers, data classes, actions/services)
+- Domain code location: `app/Domain/<Feature>/...` (feature controllers, data classes, actions/services)
 - Shared/common services location: `app/Services`
 - Model location remains: `app/Models`
 - TypeScript generation bridge: `app/Providers/TypeScriptTransformerServiceProvider.php`
@@ -45,7 +45,7 @@ This repository uses Laravel as the backend API layer.
 3. Keep controller methods thin and orchestration-focused.
 4. Validate request inputs with Spatie Data classes (request DTO pattern).
 5. Return structured API payloads using Spatie Data classes.
-6. Place feature-specific controller/data/action classes under `Domain/<Feature>/...`.
+6. Place feature-specific controller/data/action classes under `app/Domain/<Feature>/...`.
 7. Place reusable, cross-domain services in `app/Services`.
 8. Keep Eloquent models in `app/Models`.
 9. Regenerate frontend types when API Data contracts change (`composer types:transform`).
@@ -55,7 +55,7 @@ This repository uses Laravel as the backend API layer.
 
 - Keep transformer scope aligned with project structure:
   - `app/Data`
-  - `Domain` (all feature data classes)
+  - `app/Domain` (all feature data classes)
 - Add `#[TypeScript]` to backend Data classes that are part of frontend contracts.
 - After changing these classes, always run `composer types:transform`.
 

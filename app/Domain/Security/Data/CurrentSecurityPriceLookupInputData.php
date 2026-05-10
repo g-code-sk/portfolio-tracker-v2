@@ -50,4 +50,9 @@ final readonly class CurrentSecurityPriceLookupInputData
     {
         return $this->normalizedDisplayName !== null;
     }
+
+    public function shouldDisambiguateByNormalizedName(int $hitCount): bool
+    {
+        return $hitCount > 1 && $this->hasNonEmptyNormalizedDisplayName();
+    }
 }
