@@ -55,31 +55,31 @@ class ImportTrading212TransactionsAction
 
     private function validateImportRow(Trading212ImportRowData $importRow): void
     {
-        if ($importRow->ticker === null) {
+        if (! $importRow->hasTicker()) {
             throw MissingTickerTrading212ImportException::fromImportRow($importRow);
         }
 
-        if ($importRow->externalTransactionId === null) {
+        if (! $importRow->hasExternalTransactionId()) {
             throw MissingExternalTransactionIdTrading212ImportException::fromImportRow($importRow);
         }
 
-        if ($importRow->numberOfShares === null || $importRow->pricePerShare === null) {
+        if (! $importRow->hasShareAndPriceFields()) {
             throw MissingShareOrPriceTrading212ImportException::fromImportRow($importRow);
         }
 
-        if ($importRow->currencyPricePerShare === null) {
+        if (! $importRow->hasCurrencyPricePerShare()) {
             throw MissingPriceCurrencyTrading212ImportException::fromImportRow($importRow);
         }
 
-        if (strlen($importRow->currencyPricePerShare) !== 3) {
+        if (! $importRow->hasThreeLetterPriceCurrency()) {
             throw InvalidPriceCurrencyTrading212ImportException::fromImportRow($importRow);
         }
 
-        if (! is_numeric($importRow->numberOfShares) || ! is_numeric($importRow->pricePerShare)) {
+        if (! $importRow->hasNumericShareAndPrice()) {
             throw NonNumericShareOrPriceTrading212ImportException::fromImportRow($importRow);
         }
 
-        if ($importRow->time === null) {
+        if (! $importRow->hasTime()) {
             throw InvalidExecutionTimeTrading212ImportException::fromImportRow($importRow);
         }
     }
@@ -159,11 +159,11 @@ class ImportTrading212TransactionsAction
             ],
         );
 
-        if ($security->name === '' || $security->name === $importRow->ticker) {
+        if ($security->hasPlaceholderNameComparedToTicker($importRow->ticker)) {
             $security->name = $securityName;
         }
 
-        if ($security->isin === null && $importRow->isin !== null) {
+        if ($security->isin === null && $importRow->hasIsin()) {
             $security->isin = $importRow->isin;
         }
 

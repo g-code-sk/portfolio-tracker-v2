@@ -3,8 +3,9 @@
 namespace Domain\Security\Contract;
 
 use Domain\Security\Data\CurrentSecurityPriceData;
+use Domain\Security\Data\CurrentSecurityPriceLookupInputData;
 
 interface CurrentSecurityPriceProviderInterface
 {
-    public function fetchCurrentPriceData(string $ticker, ?string $name = null, ?string $isin = null): ?CurrentSecurityPriceData;
+    public function fetchCurrentPriceData(CurrentSecurityPriceLookupInputData $lookup): ?CurrentSecurityPriceData;
 }

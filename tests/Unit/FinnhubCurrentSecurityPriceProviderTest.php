@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use Carbon\CarbonImmutable;
+use Domain\Security\Data\CurrentSecurityPriceLookupInputData;
 use Domain\Security\Enums\SecurityDataProviderCode;
 use Domain\Security\Service\FinnhubCurrentSecurityPriceProvider;
 use Finnhub\Api\DefaultApi;
@@ -36,28 +37,28 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ->once()
                 ->with('AAPL')
                 ->andReturn([
-                'c' => 190.55,
-                'd' => 1.2,
-                'dp' => 0.63,
-                'h' => 191.0,
-                'l' => 188.5,
-                'o' => 189.0,
-                'pc' => 189.35,
-                't' => 1710000000,
-            ]);
+                    'c' => 190.55,
+                    'd' => 1.2,
+                    'dp' => 0.63,
+                    'h' => 191.0,
+                    'l' => 188.5,
+                    'o' => 189.0,
+                    'pc' => 189.35,
+                    't' => 1710000000,
+                ]);
 
             $client->shouldReceive('companyProfile2')
                 ->once()
                 ->with('AAPL')
                 ->andReturn([
-                'ticker' => 'AAPL',
-                'currency' => 'usd',
-                'exchange' => 'US',
-            ]);
+                    'ticker' => 'AAPL',
+                    'currency' => 'usd',
+                    'exchange' => 'US',
+                ]);
         });
 
         $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
-        $result = $provider->fetchCurrentPriceData('AAPL');
+        $result = $provider->fetchCurrentPriceData($this->lookup('AAPL'));
 
         $this->assertNotNull($result);
         $this->assertSame('AAPL', $result->ticker);
@@ -74,21 +75,21 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ->once()
                 ->with('FOO')
                 ->andReturn([
-                'c' => 10.0,
-                't' => 1710000000,
-            ]);
+                    'c' => 10.0,
+                    't' => 1710000000,
+                ]);
 
             $client->shouldReceive('companyProfile2')
                 ->once()
                 ->with('FOO')
                 ->andReturn([
-                'ticker' => 'FOO',
-            ]);
+                    'ticker' => 'FOO',
+                ]);
         });
 
         $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
 
-        $this->assertNull($provider->fetchCurrentPriceData('FOO'));
+        $this->assertNull($provider->fetchCurrentPriceData($this->lookup('FOO')));
     }
 
     public function test_it_returns_null_when_quote_has_no_trade_data(): void
@@ -98,21 +99,21 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ->once()
                 ->with('UNKNOWN')
                 ->andReturn([
-                'c' => 0,
-                't' => 0,
-            ]);
+                    'c' => 0,
+                    't' => 0,
+                ]);
 
             $client->shouldReceive('symbolSearch')
                 ->once()
                 ->with('UNKNOWN')
                 ->andReturn([
-                'result' => [],
-            ]);
+                    'result' => [],
+                ]);
         });
 
         $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
 
-        $this->assertNull($provider->fetchCurrentPriceData('UNKNOWN'));
+        $this->assertNull($provider->fetchCurrentPriceData($this->lookup('UNKNOWN')));
     }
 
     public function test_it_resolves_canonical_symbol_via_search_when_first_quote_is_empty(): void
@@ -153,12 +154,12 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ->once()
                 ->with('NYSE:FL')
                 ->andReturn([
-                'currency' => 'usd',
-            ]);
+                    'currency' => 'usd',
+                ]);
         });
 
         $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
-        $result = $provider->fetchCurrentPriceData('FL', 'Foot Locker Inc.', 'US3448491049');
+        $result = $provider->fetchCurrentPriceData($this->lookup('FL', 'Foot Locker Inc.', 'US3448491049'));
 
         $this->assertNotNull($result);
         $this->assertSame('FL', $result->ticker);
@@ -174,34 +175,34 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ->once()
                 ->with('FL')
                 ->andReturn([
-                'c' => 0,
-                't' => 0,
-            ]);
+                    'c' => 0,
+                    't' => 0,
+                ]);
 
             $client->shouldReceive('symbolSearch')
                 ->once()
                 ->with('FL')
                 ->andReturn([
-                'result' => [
-                    [
-                        'symbol' => 'NYSE:FL',
-                        'displaySymbol' => 'FL',
-                        'description' => 'Foot Locker Inc',
-                        'type' => 'Common Stock',
+                    'result' => [
+                        [
+                            'symbol' => 'NYSE:FL',
+                            'displaySymbol' => 'FL',
+                            'description' => 'Foot Locker Inc',
+                            'type' => 'Common Stock',
+                        ],
+                        [
+                            'symbol' => 'TSX:FL',
+                            'displaySymbol' => 'FL',
+                            'description' => 'Florida Mining Corp',
+                            'type' => 'Common Stock',
+                        ],
                     ],
-                    [
-                        'symbol' => 'TSX:FL',
-                        'displaySymbol' => 'FL',
-                        'description' => 'Florida Mining Corp',
-                        'type' => 'Common Stock',
-                    ],
-                ],
-            ]);
+                ]);
         });
 
         $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
 
-        $this->assertNull($provider->fetchCurrentPriceData('FL'));
+        $this->assertNull($provider->fetchCurrentPriceData($this->lookup('FL')));
     }
 
     public function test_it_keeps_only_search_hits_matching_isin_when_isin_is_provided(): void
@@ -249,12 +250,12 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ->once()
                 ->with('TSX:FL')
                 ->andReturn([
-                'currency' => 'CAD',
-            ]);
+                    'currency' => 'CAD',
+                ]);
         });
 
         $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
-        $result = $provider->fetchCurrentPriceData('FL', 'Foot Locker Inc.', 'US3448491049');
+        $result = $provider->fetchCurrentPriceData($this->lookup('FL', 'Foot Locker Inc.', 'US3448491049'));
 
         $this->assertNotNull($result);
         $this->assertSame('FL', $result->ticker);
@@ -305,12 +306,12 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
                 ->once()
                 ->with('NYSE:FL')
                 ->andReturn([
-                'currency' => 'USD',
-            ]);
+                    'currency' => 'USD',
+                ]);
         });
 
         $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
-        $result = $provider->fetchCurrentPriceData('FL', 'Foot Locker Inc.');
+        $result = $provider->fetchCurrentPriceData($this->lookup('FL', 'Foot Locker Inc.'));
 
         $this->assertNotNull($result);
         $this->assertSame('FL', $result->ticker);
@@ -329,7 +330,15 @@ class FinnhubCurrentSecurityPriceProviderTest extends TestCase
 
         $provider = $this->app->make(FinnhubCurrentSecurityPriceProvider::class);
 
-        $this->assertNull($provider->fetchCurrentPriceData('AAPL'));
+        $this->assertNull($provider->fetchCurrentPriceData($this->lookup('AAPL')));
+    }
+
+    private function lookup(string $ticker, ?string $name = null, ?string $isin = null): CurrentSecurityPriceLookupInputData
+    {
+        $dto = CurrentSecurityPriceLookupInputData::tryFrom($ticker, $name, $isin);
+        $this->assertNotNull($dto);
+
+        return $dto;
     }
 
     /**

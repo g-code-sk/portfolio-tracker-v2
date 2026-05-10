@@ -35,8 +35,7 @@ class SyncCurrentSecurityPricesAction
         $results = $securities->map(function (Security $security) use ($forceSync, $ttlHours): SyncCurrentSecurityPriceResultData {
             $now = Carbon::now();
 
-            $wasNotUpdatedRecently = $security->current_price_updated_at === null
-                || $security->current_price_updated_at->copy()->addHours($ttlHours)->lte($now);
+            $wasNotUpdatedRecently = $security->isCurrentPriceStale($now, $ttlHours);
 
             if ($forceSync || $wasNotUpdatedRecently) {
                 return $this->syncCurrentSecurityPrice->execute($security);

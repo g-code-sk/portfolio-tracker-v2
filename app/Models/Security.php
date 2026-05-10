@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 #[Fillable([
     'ticker',
@@ -46,5 +47,19 @@ class Security extends Model
     public function currentDataProvider(): BelongsTo
     {
         return $this->belongsTo(SecurityDataProvider::class, 'current_data_provider_id');
+    }
+
+    public function hasPlaceholderNameComparedToTicker(string $ticker): bool
+    {
+        return $this->name === '' || $this->name === $ticker;
+    }
+
+    public function isCurrentPriceStale(Carbon $now, int $ttlHours): bool
+    {
+        if ($this->current_price_updated_at === null) {
+            return true;
+        }
+
+        return $this->current_price_updated_at->copy()->addHours($ttlHours)->lte($now);
     }
 }

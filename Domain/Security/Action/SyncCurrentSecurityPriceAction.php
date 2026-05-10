@@ -5,6 +5,7 @@ namespace Domain\Security\Action;
 use App\Models\Security;
 use App\Models\SecurityDataProvider;
 use Domain\Security\Contract\CurrentSecurityPriceProviderInterface;
+use Domain\Security\Data\CurrentSecurityPriceLookupInputData;
 use Domain\Security\Data\SyncCurrentSecurityPriceResultData;
 use Throwable;
 
@@ -16,16 +17,14 @@ class SyncCurrentSecurityPriceAction
 
     public function execute(Security $security): SyncCurrentSecurityPriceResultData
     {
-        if ($security->ticker === '') {
+        $lookup = CurrentSecurityPriceLookupInputData::tryFromSecurity($security);
+
+        if ($lookup === null) {
             return SyncCurrentSecurityPriceResultData::skipped($security->id, $security->ticker, 'Ticker is empty');
         }
 
         try {
-            $currentPriceData = $this->currentSecurityPriceProvider->fetchCurrentPriceData(
-                $security->ticker,
-                $security->name,
-                $security->isin,
-            );
+            $currentPriceData = $this->currentSecurityPriceProvider->fetchCurrentPriceData($lookup);
 
             if ($currentPriceData === null) {
                 return SyncCurrentSecurityPriceResultData::skipped($security->id, $security->ticker, 'Current price data is null');

@@ -5,6 +5,7 @@ namespace Domain\Security\Service;
 use App\Support\ApplicationConfig;
 use Domain\Security\Contract\CurrentSecurityPriceProviderInterface;
 use Domain\Security\Data\CurrentSecurityPriceData;
+use Domain\Security\Data\CurrentSecurityPriceLookupInputData;
 use Domain\Security\Data\FinnhubQuoteData;
 use Domain\Security\Data\FinnhubSymbolSearchHitData;
 use Domain\Security\Enums\SecurityDataProviderCode;
@@ -16,37 +17,22 @@ class FinnhubCurrentSecurityPriceProvider implements CurrentSecurityPriceProvide
     public function __construct(
         private readonly ApplicationConfig $applicationConfig,
         private readonly DefaultApi $finnhubClient,
-        private readonly FinnhubSymbolSearchHitMatcher $symbolSearchHitMatcher,
     ) {}
 
-    public function fetchCurrentPriceData(string $ticker, ?string $name = null, ?string $isin = null): ?CurrentSecurityPriceData
+    public function fetchCurrentPriceData(CurrentSecurityPriceLookupInputData $lookup): ?CurrentSecurityPriceData
     {
-        $normalizedTicker = trim($ticker);
-
-        if ($normalizedTicker === '') {
-            return null;
-        }
-
         $apiKey = $this->applicationConfig->getFinnhubApiKey();
 
         if ($apiKey === null) {
             return null;
         }
 
-        $tickerUpper = strtoupper($normalizedTicker);
-        $normalizedName = $name !== null ? trim($name) : null;
-        $normalizedIsin = $isin !== null ? strtoupper(trim($isin)) : null;
-
-        if ($normalizedIsin === '') {
-            $normalizedIsin = null;
-        }
-
-        $symbolForQuote = $normalizedTicker;
+        $symbolForQuote = $lookup->ticker;
 
         $quote = $this->fetchQuote($symbolForQuote);
 
         if ($quote === null || $quote->isEmpty()) {
-            $resolved = $this->resolveSymbolViaSearch($tickerUpper, $normalizedName, $normalizedIsin);
+            $resolved = $this->resolveSymbolViaSearch($lookup);
 
             if ($resolved === null) {
                 return null;
@@ -71,7 +57,7 @@ class FinnhubCurrentSecurityPriceProvider implements CurrentSecurityPriceProvide
         }
 
         return new CurrentSecurityPriceData(
-            ticker: $normalizedTicker,
+            ticker: $lookup->ticker,
             price: $quote->getFormattedCurrentPrice(),
             currency: strtoupper($currency),
             quotedAt: $quote->getQuotedAt(),
@@ -94,24 +80,24 @@ class FinnhubCurrentSecurityPriceProvider implements CurrentSecurityPriceProvide
         return FinnhubQuoteData::fromPayload($quote);
     }
 
-    private function resolveSymbolViaSearch(string $tickerUpper, ?string $normalizedName, ?string $normalizedIsin): ?string
+    private function resolveSymbolViaSearch(CurrentSecurityPriceLookupInputData $lookup): ?string
     {
         /** @var array<int, string> $queries */
         $queries = [];
 
-        if ($normalizedIsin !== null) {
-            $queries[] = $normalizedIsin;
+        if ($lookup->normalizedIsin !== null) {
+            $queries[] = $lookup->normalizedIsin;
         }
 
-        if ($normalizedName !== null && $normalizedName !== '') {
-            $queries[] = $normalizedName;
+        if ($lookup->hasNonEmptyNormalizedDisplayName()) {
+            $queries[] = $lookup->normalizedDisplayName;
         }
 
-        $queries[] = $tickerUpper;
+        $queries[] = $lookup->tickerUpper;
 
         foreach ($queries as $query) {
             $hits = $this->fetchSearchHits($query);
-            $symbols = $this->symbolSearchHitMatcher->matchSymbolsFromHits($hits, $tickerUpper, $normalizedIsin, $normalizedName);
+            $symbols = $this->matchingCanonicalSymbolsFromHits($hits, $lookup);
 
             if (count($symbols) === 1) {
                 return $symbols[0];
@@ -123,6 +109,38 @@ class FinnhubCurrentSecurityPriceProvider implements CurrentSecurityPriceProvide
         }
 
         return null;
+    }
+
+    /**
+     * @param  list<FinnhubSymbolSearchHitData>  $hits
+     * @return list<string>
+     */
+    private function matchingCanonicalSymbolsFromHits(array $hits, CurrentSecurityPriceLookupInputData $lookup): array
+    {
+        $passedHits = [];
+
+        foreach ($hits as $hit) {
+            if (! $hit->matchSymbol($lookup)) {
+                continue;
+            }
+
+            $passedHits[] = $hit;
+        }
+
+        $shouldDisambiguateByName = count($passedHits) > 1 && $lookup->hasNonEmptyNormalizedDisplayName();
+
+        if ($shouldDisambiguateByName) {
+            $passedHits = array_values(array_filter(
+                $passedHits,
+                fn (FinnhubSymbolSearchHitData $hit): bool => $hit->matchesNormalizedNameTokens($lookup->normalizedDisplayName),
+            ));
+        }
+
+        return collect($passedHits)
+            ->pluck('symbol')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
@@ -174,10 +192,15 @@ class FinnhubCurrentSecurityPriceProvider implements CurrentSecurityPriceProvide
 
         $currency = data_get($profilePayload, 'currency');
 
-        if (! is_string($currency) || $currency === '') {
+        if (! $this->hasNonEmptyProfileCurrency($currency)) {
             return null;
         }
 
         return $currency;
+    }
+
+    private function hasNonEmptyProfileCurrency(mixed $currency): bool
+    {
+        return is_string($currency) && $currency !== '';
     }
 }

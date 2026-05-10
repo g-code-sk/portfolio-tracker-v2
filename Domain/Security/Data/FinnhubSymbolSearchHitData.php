@@ -43,6 +43,22 @@ final readonly class FinnhubSymbolSearchHitData
         public ?string $isin,
     ) {}
 
+    /**
+     * Whether this search hit matches the portfolio ticker and optional ISIN (equity-like instrument filter included).
+     */
+    public function matchSymbol(CurrentSecurityPriceLookupInputData $lookup): bool
+    {
+        if (! $this->isEquityLikeInstrumentType()) {
+            return false;
+        }
+
+        if (! $this->matchesTicker($lookup->tickerUpper)) {
+            return false;
+        }
+
+        return $this->matchesIsin($lookup->normalizedIsin);
+    }
+
     public static function tryFromRow(mixed $row): ?self
     {
         if (! is_array($row)) {

@@ -5,6 +5,7 @@ namespace Domain\Security\Service;
 use Carbon\CarbonImmutable;
 use Domain\Security\Contract\CurrentSecurityPriceProviderInterface;
 use Domain\Security\Data\CurrentSecurityPriceData;
+use Domain\Security\Data\CurrentSecurityPriceLookupInputData;
 use Domain\Security\Enums\SecurityDataProviderCode;
 use GuzzleHttp\Exception\GuzzleException;
 use Scheb\YahooFinanceApi\ApiClient;
@@ -17,16 +18,10 @@ class YahooCurrentSecurityPriceProvider implements CurrentSecurityPriceProviderI
         private readonly ApiClient $apiClient,
     ) {}
 
-    public function fetchCurrentPriceData(string $ticker, ?string $name = null, ?string $isin = null): ?CurrentSecurityPriceData
+    public function fetchCurrentPriceData(CurrentSecurityPriceLookupInputData $lookup): ?CurrentSecurityPriceData
     {
-        $normalizedTicker = trim($ticker);
-
-        if ($normalizedTicker === '') {
-            return null;
-        }
-
         try {
-            $quote = $this->apiClient->getQuote($normalizedTicker);
+            $quote = $this->apiClient->getQuote($lookup->ticker);
         } catch (ApiException|GuzzleException $exception) {
 
             return null;
@@ -49,7 +44,7 @@ class YahooCurrentSecurityPriceProvider implements CurrentSecurityPriceProviderI
         }
 
         return new CurrentSecurityPriceData(
-            ticker: $normalizedTicker,
+            ticker: $lookup->ticker,
             price: number_format($price, 10, '.', ''),
             currency: strtoupper($currency),
             quotedAt: $this->resolveQuotedAt($quote),

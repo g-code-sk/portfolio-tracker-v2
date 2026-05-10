@@ -14,4 +14,14 @@ class WholeShareBucketResponseData extends Data
         #[DataCollectionOf(WholeShareSegmentResponseData::class)]
         public array $segments,
     ) {}
+
+    public function hasSegments(): bool
+    {
+        return $this->segments !== [];
+    }
+
+    public function isEmpty(): bool
+    {
+        return ! $this->hasSegments();
+    }
 }
