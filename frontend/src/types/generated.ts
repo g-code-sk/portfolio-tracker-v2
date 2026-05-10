@@ -34,6 +34,8 @@ sharesSold: number,
 investedAmount: number,
 soldAmount: number,
 totalShares: number,
+currentPrice: number | null,
+currentPriceCurrency: string | null,
 };
 export type PortfolioPositionsResponseData = {
 positions: Array<any>,
@@ -67,6 +69,7 @@ email: string,
 password: string,
 passwordConfirmation: string,
 };
+export type SecurityDataProviderCode = "yahoo" | "finnhub";
 export type Trading212TransactionType = "Market buy" | "Market sell";
 export type TransactionImportPayloadData = {
 importType: TransactionImportType,
