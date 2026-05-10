@@ -2,7 +2,10 @@
 
 namespace Domain\Transaction\Action;
 
+use App\Models\SecuritySplit;
 use App\Models\Transaction;
+use App\Services\PortfolioSecuritySplitAdjustmentService;
+use Domain\Transaction\Data\SplitAdjustedTransaction;
 use Domain\Transaction\Data\WholeShareGroupResponseData;
 use Domain\Transaction\Data\WholeShareGroupsResponseData;
 use Domain\Transaction\Enums\TransactionTypeCode;
@@ -14,25 +17,32 @@ class SplitTransactionsAtWholeShareBoundariesAction
 {
     /**
      * @param  Collection<int, Transaction>  $transactionsAscending
+     * @param  Collection<int, SecuritySplit>  $splitsForSecurity
      */
-    public function execute(Collection $transactionsAscending, ?string $portfolioName = null): WholeShareGroupsResponseData
-    {
+    public function execute(
+        Collection $transactionsAscending,
+        Collection $splitsForSecurity,
+        PortfolioSecuritySplitAdjustmentService $splitAdjustmentService,
+        ?string $portfolioName = null,
+    ): WholeShareGroupsResponseData {
         $groups = [];
         $globalGroupIndex = 0;
 
-        $cycles = TransactionPositionCyclePartitionerService::partition($transactionsAscending);
+        $rows = $splitAdjustmentService->collectSplitAdjustedTransactions($transactionsAscending, $splitsForSecurity);
 
-        foreach ($cycles as $cycleTransactions) {
-            $buyTransactions = $cycleTransactions
-                ->filter(fn (Transaction $transaction): bool => $transaction->type->code === TransactionTypeCode::Buy)
+        $cycles = TransactionPositionCyclePartitionerService::partition($rows);
+
+        foreach ($cycles as $cycleRows) {
+            $buyRows = $cycleRows
+                ->filter(fn (SplitAdjustedTransaction $row): bool => $row->transaction->type->code === TransactionTypeCode::Buy)
                 ->values();
 
-            $sellTransactions = $cycleTransactions
-                ->filter(fn (Transaction $transaction): bool => $transaction->type->code === TransactionTypeCode::Sell)
+            $sellRows = $cycleRows
+                ->filter(fn (SplitAdjustedTransaction $row): bool => $row->transaction->type->code === TransactionTypeCode::Sell)
                 ->values();
 
-            $buyBuckets = WholeShareBucketPartitionerService::splitToBuckets($buyTransactions);
-            $sellBuckets = WholeShareBucketPartitionerService::splitToBuckets($sellTransactions);
+            $buyBuckets = WholeShareBucketPartitionerService::splitToBuckets($buyRows);
+            $sellBuckets = WholeShareBucketPartitionerService::splitToBuckets($sellRows);
 
             /** @var array<int, int> $groupIndices */
             $groupIndices = collect(array_keys($buyBuckets))

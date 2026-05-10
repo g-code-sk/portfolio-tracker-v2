@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace Domain\Transaction\Data;
 
 /**
  * Split-adjusted presentation of a fill (quantity scaled up, price scaled down;

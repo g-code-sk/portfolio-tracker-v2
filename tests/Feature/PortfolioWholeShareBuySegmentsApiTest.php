@@ -5,11 +5,14 @@ namespace Tests\Feature;
 use App\Models\Currency;
 use App\Models\Portfolio;
 use App\Models\Security;
+use App\Models\SecurityDataProvider;
+use App\Models\SecuritySplit;
 use App\Models\Transaction;
 use App\Models\TransactionType;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Seeders\TransactionTypeSeeder;
+use Domain\Security\Enums\SecurityDataProviderCode;
 use Domain\Transaction\Enums\TransactionTypeCode;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -282,6 +285,50 @@ class PortfolioWholeShareBuySegmentsApiTest extends TestCase
         );
 
         $response->assertForbidden();
+    }
+
+    public function test_whole_share_groups_scale_when_split_occurs_after_trade(): void
+    {
+        $yahooProvider = SecurityDataProvider::query()->create([
+            'code' => SecurityDataProviderCode::Yahoo->value,
+            'name' => 'Yahoo Finance',
+        ]);
+
+        $user = $this->createUser('split-wss@example.com');
+        $portfolio = Portfolio::query()->create(['name' => 'Main', 'user_id' => $user->id]);
+        $security = Security::query()->create(['ticker' => 'SPLW', 'name' => 'SplitCo', 'isin' => 'US0000000002']);
+        $usd = Currency::query()->create(['name' => 'US Dollar', 'symbol' => 'USD']);
+        $buyType = TransactionType::query()->where('code', TransactionTypeCode::Buy->value)->firstOrFail();
+
+        Transaction::query()->create([
+            'portfolio_id' => $portfolio->id,
+            'security_id' => $security->id,
+            'type_id' => $buyType->id,
+            'external_transaction_id' => 'pre-split-buy',
+            'number_of_shares' => 100.0,
+            'price_per_share' => 40.0,
+            'currency_id' => $usd->id,
+            'executed_at' => '2020-06-01',
+        ]);
+
+        SecuritySplit::query()->create([
+            'security_id' => $security->id,
+            'security_data_provider_id' => $yahooProvider->id,
+            'effective_on' => '2020-08-31',
+            'ratio_numerator' => 4,
+            'ratio_denominator' => 1,
+            'raw_ratio' => '4:1',
+        ]);
+
+        $response = $this->actingAsSpaUser($user)->get(
+            "/api/portfolios/{$portfolio->id}/transactions/whole-share-buy-segments?securityId={$security->id}&currencyId={$usd->id}"
+        );
+
+        $response->assertOk()->assertJsonCount(400, 'data.groups');
+
+        $payload = $response->json('data');
+        $this->assertEqualsWithDelta(1.0, $payload['groups'][0]['buyBucket']['segments'][0]['numberOfShares'], 1e-9);
+        $this->assertEqualsWithDelta(10.0, $payload['groups'][0]['buyBucket']['segments'][0]['pricePerShare'], 1e-9);
     }
 
     public function test_it_does_not_mix_closed_cycle_buys_with_reopened_position_buys(): void

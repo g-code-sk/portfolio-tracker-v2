@@ -2,20 +2,20 @@
 
 namespace Domain\Transaction\Services;
 
-use App\Models\Transaction;
+use Domain\Transaction\Data\SplitAdjustedTransaction;
 use Domain\Transaction\Enums\TransactionTypeCode;
 use Domain\Transaction\WholeShareBucketEpsilon;
 use Illuminate\Support\Collection;
 
 final class TransactionPositionCyclePartitionerService
 {
-    /** @var list<Collection<int, Transaction>> */
+    /** @var list<Collection<int, SplitAdjustedTransaction>> */
     private array $completedCycles = [];
 
     //  Running shares is the sum of the shares in the current cycle.
     private float $runningShares = 0.0;
 
-    /** @var Collection<int, Transaction> */
+    /** @var Collection<int, SplitAdjustedTransaction> */
     private Collection $currentCycleTransactions;
 
     private function __construct()
@@ -27,15 +27,15 @@ final class TransactionPositionCyclePartitionerService
      * Partition the transactions into position cycles - a cycle means
      * that the position was opened and closed within the same cycle (all shares sold).
      *
-     * @param  Collection<int, Transaction>  $transactionsAscending
-     * @return list<Collection<int, Transaction>>
+     * @param  Collection<int, SplitAdjustedTransaction>  $splitAdjustedTransactionsAscending
+     * @return list<Collection<int, SplitAdjustedTransaction>>
      */
-    public static function partition(Collection $transactionsAscending): array
+    public static function partition(Collection $splitAdjustedTransactionsAscending): array
     {
         $partitioner = new self;
 
-        foreach ($transactionsAscending as $transaction) {
-            $partitioner->processTransaction($transaction);
+        foreach ($splitAdjustedTransactionsAscending as $row) {
+            $partitioner->processRow($row);
         }
 
         $partitioner->flushIncompleteCycle();
@@ -43,35 +43,35 @@ final class TransactionPositionCyclePartitionerService
         return $partitioner->completedCycles;
     }
 
-    private function processTransaction(Transaction $transaction): void
+    private function processRow(SplitAdjustedTransaction $row): void
     {
-        if ($this->shouldSkipTransaction($transaction)) {
+        if ($this->shouldSkipRow($row)) {
             return;
         }
 
-        $shares = (float) $transaction->number_of_shares;
+        $shares = $row->numberOfShares;
 
-        if ($transaction->type->code === TransactionTypeCode::Buy) {
-            $this->applyBuy($transaction, $shares);
+        if ($row->transaction->type->code === TransactionTypeCode::Buy) {
+            $this->applyBuy($row, $shares);
 
             return;
         }
 
-        if ($transaction->type->code === TransactionTypeCode::Sell) {
-            $this->applySell($transaction, $shares);
+        if ($row->transaction->type->code === TransactionTypeCode::Sell) {
+            $this->applySell($row, $shares);
         }
     }
 
-    private function shouldSkipTransaction(Transaction $transaction): bool
+    private function shouldSkipRow(SplitAdjustedTransaction $row): bool
     {
-        return (float) $transaction->number_of_shares <= WholeShareBucketEpsilon::VALUE;
+        return $row->numberOfShares <= WholeShareBucketEpsilon::VALUE;
     }
 
-    private function applyBuy(Transaction $transaction, float $shares): void
+    private function applyBuy(SplitAdjustedTransaction $row, float $shares): void
     {
         $this->startNewCycleIfPositionWasClosedButBufferNotEmpty();
 
-        $this->currentCycleTransactions->push($transaction);
+        $this->currentCycleTransactions->push($row);
         $this->runningShares += $shares;
     }
 
@@ -89,9 +89,9 @@ final class TransactionPositionCyclePartitionerService
         $this->currentCycleTransactions = collect();
     }
 
-    private function applySell(Transaction $transaction, float $shares): void
+    private function applySell(SplitAdjustedTransaction $row, float $shares): void
     {
-        $this->currentCycleTransactions->push($transaction);
+        $this->currentCycleTransactions->push($row);
         $this->runningShares -= $shares;
 
         if (! $this->isApproximatelyZero($this->runningShares)) {

@@ -3,6 +3,7 @@
 namespace Domain\Transaction\Services;
 
 use App\Models\Transaction;
+use Domain\Transaction\Data\SplitAdjustedTransaction;
 use Domain\Transaction\Data\WholeShareBucketResponseData;
 use Domain\Transaction\Data\WholeShareSegmentResponseData;
 use Domain\Transaction\WholeShareBucketEpsilon;
@@ -23,28 +24,29 @@ final class WholeShareBucketPartitionerService
     /**
      * Split transactions into ordered whole-share buckets (each bucket totals one share).
      *
-     * @param  Collection<int, Transaction>  $transactionsAscending
+     * @param  Collection<int, SplitAdjustedTransaction>  $splitAdjustedTransactionsAscending
      * @return array<int, WholeShareBucketResponseData>
      */
-    public static function splitToBuckets(Collection $transactionsAscending): array
+    public static function splitToBuckets(Collection $splitAdjustedTransactionsAscending): array
     {
         $splitter = new self;
 
-        foreach ($transactionsAscending as $transaction) {
-            $splitter->processTransaction($transaction);
+        foreach ($splitAdjustedTransactionsAscending as $row) {
+            $splitter->processRow($row);
         }
 
         return $splitter->buildBucketResponseData();
     }
 
-    private function processTransaction(Transaction $transaction): void
+    private function processRow(SplitAdjustedTransaction $row): void
     {
-        if ($this->shouldSkipTransaction($transaction)) {
+        if ($this->shouldSkipRow($row)) {
             return;
         }
 
-        $transactionShareCount = (float) $transaction->number_of_shares;
-        $transactionAmount = $transactionShareCount * (float) $transaction->price_per_share;
+        $transaction = $row->transaction;
+        $transactionShareCount = $row->numberOfShares;
+        $transactionAmount = $row->totalAmount;
         $remainingShareCount = $transactionShareCount;
 
         while ($remainingShareCount > WholeShareBucketEpsilon::VALUE) {
@@ -57,9 +59,9 @@ final class WholeShareBucketPartitionerService
         }
     }
 
-    private function shouldSkipTransaction(Transaction $transaction): bool
+    private function shouldSkipRow(SplitAdjustedTransaction $row): bool
     {
-        return (float) $transaction->number_of_shares <= WholeShareBucketEpsilon::VALUE;
+        return $row->numberOfShares <= WholeShareBucketEpsilon::VALUE;
     }
 
     private function allocateNextSlice(
@@ -74,7 +76,9 @@ final class WholeShareBucketPartitionerService
         $segment = WholeShareSegmentResponseData::fromTransactionShareSlice(
             $transaction,
             $segmentShareCount,
-            $segmentTotalAmount
+            $segmentTotalAmount,
+            $transactionShareCount,
+            $transactionAmount,
         );
 
         $this->appendSegmentToCurrentBucket($segment);

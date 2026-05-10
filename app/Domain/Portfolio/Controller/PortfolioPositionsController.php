@@ -58,6 +58,7 @@ class PortfolioPositionsController extends Controller
             $portfolioPositionResponseData = PortfolioPositionResponseData::fromTransactions(
                 $transactions,
                 $splitsForSecurity,
+                $splitAdjustmentService,
             );
 
             $portfolioPositions->push($portfolioPositionResponseData);

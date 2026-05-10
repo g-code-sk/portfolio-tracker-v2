@@ -3,7 +3,7 @@
 namespace Domain\Portfolio\Data;
 
 use App\Models\Transaction;
-use App\Services\SplitAdjustedTransactionAmounts;
+use Domain\Transaction\Data\SplitAdjustedTransactionAmounts;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 

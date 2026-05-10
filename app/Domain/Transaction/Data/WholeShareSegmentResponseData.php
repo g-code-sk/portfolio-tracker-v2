@@ -3,6 +3,7 @@
 namespace Domain\Transaction\Data;
 
 use App\Models\Transaction;
+use Domain\Transaction\WholeShareBucketEpsilon;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -21,17 +22,26 @@ class WholeShareSegmentResponseData extends Data
         public string $currencySymbol,
     ) {}
 
-    public static function fromTransactionShareSlice(Transaction $transaction, float $numberOfShares, float $totalAmount): self
-    {
+    public static function fromTransactionShareSlice(
+        Transaction $transaction,
+        float $segmentShareCount,
+        float $segmentTotalAmount,
+        float $transactionShareCount,
+        float $transactionTotalAmount,
+    ): self {
+        $pricePerShare = $transactionShareCount > WholeShareBucketEpsilon::VALUE
+            ? $transactionTotalAmount / $transactionShareCount
+            : (float) $transaction->price_per_share;
+
         return new self(
             sourceTransactionId: $transaction->id,
             externalTransactionId: $transaction->external_transaction_id ?? '',
             executedAt: $transaction->executed_at->toIso8601String(),
             ticker: $transaction->security->ticker,
             name: $transaction->security->name,
-            numberOfShares: $numberOfShares,
-            pricePerShare: (float) $transaction->price_per_share,
-            totalAmount: $totalAmount,
+            numberOfShares: $segmentShareCount,
+            pricePerShare: $pricePerShare,
+            totalAmount: $segmentTotalAmount,
             currencySymbol: $transaction->currency->symbol,
         );
     }

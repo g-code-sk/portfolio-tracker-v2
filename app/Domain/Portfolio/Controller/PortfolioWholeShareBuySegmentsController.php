@@ -4,8 +4,10 @@ namespace Domain\Portfolio\Controller;
 
 use App\Http\Controllers\Controller;
 use App\Models\Portfolio;
+use App\Models\SecuritySplit;
 use App\Models\Transaction;
 use App\Services\ApiResponseService;
+use App\Services\PortfolioSecuritySplitAdjustmentService;
 use Domain\Portfolio\Data\PortfolioWholeShareBuySegmentsQueryData;
 use Domain\Transaction\Action\SplitTransactionsAtWholeShareBoundariesAction;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +20,7 @@ class PortfolioWholeShareBuySegmentsController extends Controller
         Portfolio $portfolio,
         PortfolioWholeShareBuySegmentsQueryData $queryData,
         SplitTransactionsAtWholeShareBoundariesAction $splitTransactionsAtWholeShareBoundaries,
+        PortfolioSecuritySplitAdjustmentService $splitAdjustmentService,
         ApiResponseService $apiResponse
     ): JsonResponse {
         Gate::authorize('view', $portfolio);
@@ -30,7 +33,17 @@ class PortfolioWholeShareBuySegmentsController extends Controller
             ->orderBy('executed_at')
             ->get();
 
-        $data = $splitTransactionsAtWholeShareBoundaries->execute($transactions, $portfolio->name);
+        $splitsForSecurity = SecuritySplit::query()
+            ->where('security_id', $queryData->securityId)
+            ->orderBy('effective_on')
+            ->get();
+
+        $data = $splitTransactionsAtWholeShareBoundaries->execute(
+            $transactions,
+            $splitsForSecurity,
+            $splitAdjustmentService,
+            $portfolio->name,
+        );
 
         return $apiResponse->make(
             message: 'Whole share segments fetched successfully.',

@@ -2,10 +2,9 @@
 
 namespace Domain\Portfolio\Data;
 
+use App\Models\SecuritySplit;
 use App\Models\Transaction;
 use App\Services\PortfolioSecuritySplitAdjustmentService;
-use App\Services\SplitAdjustedTransactionAmounts;
-use Domain\Transaction\Enums\TransactionTypeCode;
 use Domain\Transaction\WholeShareBucketEpsilon;
 use Illuminate\Support\Collection;
 use Spatie\LaravelData\Data;
@@ -35,35 +34,18 @@ class PortfolioPositionResponseData extends Data
      * @param  Collection<int, Transaction>  $transactions
      * @param  Collection<int, SecuritySplit>  $splitsForSecurity
      */
-    public static function fromTransactions(Collection $transactions, Collection $splitsForSecurity): self
-    {
-        $splitAdjustmentService = new PortfolioSecuritySplitAdjustmentService;
+    public static function fromTransactions(
+        Collection $transactions,
+        Collection $splitsForSecurity,
+        PortfolioSecuritySplitAdjustmentService $splitAdjustmentService,
+    ): self {
+        $totals = $splitAdjustmentService->summarizeBuySell($transactions, $splitsForSecurity);
 
-        $adjustedBuyTransactionsData = $transactions
-            ->filter(fn (Transaction $transaction): bool => $transaction->type->code === TransactionTypeCode::Buy)
-            ->map(function (Transaction $transaction) use ($splitsForSecurity, $splitAdjustmentService): SplitAdjustedTransactionAmounts {
-                return $splitAdjustmentService->adjust($transaction, $splitsForSecurity);
-            });
-
-        $adjustedSellTransactionsData = $transactions
-            ->filter(fn (Transaction $transaction): bool => $transaction->type->code === TransactionTypeCode::Sell)
-            ->map(function (Transaction $transaction) use ($splitsForSecurity, $splitAdjustmentService): SplitAdjustedTransactionAmounts {
-                return $splitAdjustmentService->adjust($transaction, $splitsForSecurity);
-            });
-
-        $sharesBought = collect($adjustedBuyTransactionsData)
-            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares);
-
-        $sharesSold = collect($adjustedSellTransactionsData)
-            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares);
-
-        $investedAmount = collect($adjustedBuyTransactionsData)
-            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares * $adjustedTransactionData->pricePerShare);
-
-        $soldAmount = collect($adjustedSellTransactionsData)
-            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares * $adjustedTransactionData->pricePerShare);
-
-        $totalShares = $sharesBought - $sharesSold;
+        $sharesBought = $totals->sharesBought;
+        $sharesSold = $totals->sharesSold;
+        $investedAmount = $totals->investedAmount;
+        $soldAmount = $totals->soldAmount;
+        $totalShares = $totals->totalShares();
 
         $transactionForMetadata = $transactions->first();
 
@@ -89,7 +71,69 @@ class PortfolioPositionResponseData extends Data
             investedAmount: $investedAmount,
             soldAmount: $soldAmount,
             totalShares: $totalShares,
-            totalGainLossAmount: self::resolveTotalGainLossAmount($transactionForMetadata->currency->symbol, $investedAmount, $soldAmount, $totalShares, $transactionForMetadata->security->current_price, $transactionForMetadata->security->current_price_currency),
+            totalGainLossAmount: $totalGainLossAmount,
+            totalReturnPercent: self::resolveTotalReturnPercent($totalGainLossAmount, $investedAmount),
+        );
+    }
+
+    /**
+     * Build position metrics from pre-aggregated totals (used by unit tests and reporting-style call sites).
+     *
+     * @param  array<string, mixed>  $overrides  Named constructor fields including numeric aggregates.
+     */
+    public static function fromAggregatedPresentation(array $overrides = []): self
+    {
+        $defaults = [
+            'securityId' => 1,
+            'currencyId' => 1,
+            'ticker' => 'TST',
+            'name' => 'Test Security',
+            'currencySymbol' => 'USD',
+            'sharesBought' => 10.0,
+            'sharesSold' => 10.0,
+            'investedAmount' => 1000.0,
+            'soldAmount' => 1200.0,
+            'currentPrice' => 150.0,
+            'currentPriceCurrency' => 'USD',
+        ];
+
+        $fields = array_merge($defaults, $overrides);
+
+        $sharesBought = (float) $fields['sharesBought'];
+        $sharesSold = (float) $fields['sharesSold'];
+        $investedAmount = (float) $fields['investedAmount'];
+        $soldAmount = (float) $fields['soldAmount'];
+        $totalShares = array_key_exists('totalShares', $fields)
+            ? (float) $fields['totalShares']
+            : $sharesBought - $sharesSold;
+
+        $currencySymbol = (string) $fields['currencySymbol'];
+        $currentPrice = array_key_exists('currentPrice', $fields) ? $fields['currentPrice'] : null;
+        $currentPriceCurrency = array_key_exists('currentPriceCurrency', $fields) ? $fields['currentPriceCurrency'] : null;
+
+        $totalGainLossAmount = self::resolveTotalGainLossAmount(
+            $currencySymbol,
+            $investedAmount,
+            $soldAmount,
+            $totalShares,
+            $currentPrice !== null ? (float) $currentPrice : null,
+            $currentPriceCurrency !== null ? (string) $currentPriceCurrency : null,
+        );
+
+        return new self(
+            securityId: (int) $fields['securityId'],
+            currencyId: (int) $fields['currencyId'],
+            ticker: (string) $fields['ticker'],
+            name: (string) $fields['name'],
+            currencySymbol: $currencySymbol,
+            sharesBought: $sharesBought,
+            sharesSold: $sharesSold,
+            investedAmount: $investedAmount,
+            soldAmount: $soldAmount,
+            totalShares: $totalShares,
+            currentPrice: $currentPrice !== null ? (float) $currentPrice : null,
+            currentPriceCurrency: $currentPriceCurrency !== null ? (string) $currentPriceCurrency : null,
+            totalGainLossAmount: $totalGainLossAmount,
             totalReturnPercent: self::resolveTotalReturnPercent($totalGainLossAmount, $investedAmount),
         );
     }
