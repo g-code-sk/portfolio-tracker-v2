@@ -3,6 +3,7 @@
 namespace Domain\Portfolio\Data;
 
 use App\Models\Transaction;
+use App\Services\SplitAdjustedTransactionAmounts;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -23,7 +24,7 @@ class PortfolioTransactionResponseData extends Data
         public string $executedAt,
     ) {}
 
-    public static function fromTransaction(Transaction $transaction): self
+    public static function fromTransaction(Transaction $transaction, SplitAdjustedTransactionAmounts $splitAdjustedAmountData): self
     {
         return new self(
             id: $transaction->id,
@@ -32,9 +33,9 @@ class PortfolioTransactionResponseData extends Data
             name: $transaction->security->name,
             typeCode: $transaction->type->code->value,
             typeName: $transaction->type->name,
-            numberOfShares: (float) $transaction->number_of_shares,
-            pricePerShare: (float) $transaction->price_per_share,
-            totalAmount: (float) $transaction->number_of_shares * (float) $transaction->price_per_share,
+            numberOfShares: $splitAdjustedAmountData->numberOfShares,
+            pricePerShare: $splitAdjustedAmountData->pricePerShare,
+            totalAmount: $splitAdjustedAmountData->numberOfShares * $splitAdjustedAmountData->pricePerShare,
             currencySymbol: $transaction->currency->symbol,
             executedAt: $transaction->executed_at->toIso8601String(),
         );

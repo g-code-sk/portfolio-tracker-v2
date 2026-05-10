@@ -20,11 +20,11 @@ class PortfolioPositionsController extends Controller
     ): JsonResponse {
         Gate::authorize('view', $portfolio);
 
-        $aggregatedRows = Transaction::query()
+        $transactionsAggregatedBySecurityAndCurrency = Transaction::query()
             ->portfolioPositionMetrics($portfolio->id)
             ->get();
 
-        $positions = $aggregatedRows->map(
+        $positions = $transactionsAggregatedBySecurityAndCurrency->map(
             fn (object $aggregatedRow): PortfolioPositionResponseData => PortfolioPositionResponseData::fromAggregatedRow(
                 $aggregatedRow
             )

@@ -84,9 +84,9 @@ class Transaction extends Model
             )
             ->groupBy(
                 'transactions.security_id',
+                'transactions.currency_id',
                 'securities.ticker',
                 'securities.name',
-                'transactions.currency_id',
                 'currencies.symbol',
             )
             ->orderBy('securities.ticker');
