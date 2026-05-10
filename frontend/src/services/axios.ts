@@ -1,4 +1,5 @@
 import a from 'axios'
+import { isCsrfMismatchStatus } from '@/services/http-response-guards'
 
 // In Vite dev, default to same-origin (empty) so requests go through the dev-server proxy
 // to Laravel — avoids CORS for /api and /sanctum. Set VITE_API_BASE_URL for a remote API.
@@ -20,6 +21,11 @@ const axios = a.create({
 
 let csrfInitialized = false
 
+const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete'])
+
+export const isMutatingMethod = (method: string | undefined): boolean =>
+	method !== undefined && MUTATING_METHODS.has(method.toLowerCase())
+
 async function ensureCsrfCookie(): Promise<void> {
 	if (csrfInitialized) {
 		return
@@ -29,8 +35,7 @@ async function ensureCsrfCookie(): Promise<void> {
 }
 
 axios.interceptors.request.use(async (config) => {
-	const m = config.method?.toLowerCase()
-	if (m && ['post', 'put', 'patch', 'delete'].includes(m)) {
+	if (isMutatingMethod(config.method)) {
 		await ensureCsrfCookie()
 	}
 	return config
@@ -41,7 +46,7 @@ axios.interceptors.response.use(
 	async (error) => {
 		const status = error.response?.status
 		const originalConfig = error.config as (typeof error.config & { _retry?: boolean }) | undefined
-		if (status === 419 && originalConfig && !originalConfig._retry) {
+		if (isCsrfMismatchStatus(status) && originalConfig && !originalConfig._retry) {
 			originalConfig._retry = true
 			csrfInitialized = false
 			await ensureCsrfCookie()

@@ -83,9 +83,7 @@ const currencyId = computed(() => {
 	return Number.isNaN(parsedValue) ? null : parsedValue
 })
 
-const ticker = computed(() => {
-	return wholeShareGroupsResponse.value?.ticker ?? 'Position'
-})
+const ticker = computed(() => wholeShareGroupsResponse.value?.ticker ?? 'Position')
 
 const selectedBuyYear = ref<number | null>(null)
 const selectedSellYear = ref<number | null>(null)

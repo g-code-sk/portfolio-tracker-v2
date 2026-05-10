@@ -35,4 +35,37 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Finnhub (stock quotes / profile)
+    |--------------------------------------------------------------------------
+    |
+    | FINNHUB_API_KEY is required when SECURITY_DATA_PROVIDER is finnhub.
+    |
+    */
+
+    'finnhub' => [
+        'key' => env('FINNHUB_API_KEY'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Current security price HTTP client: "finnhub" (default) or "yahoo"
+    |--------------------------------------------------------------------------
+    */
+
+    'SECURITY_DATA_PROVIDER' => env('SECURITY_DATA_PROVIDER', 'finnhub'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Security price refresh interval (hours)
+    |--------------------------------------------------------------------------
+    |
+    | Minimum time since current_price_updated_at before syncing again without
+    | --force. Zero means always attempt refresh when not forcing.
+    |
+    */
+
+    'security_price_refresh_after_hours' => max(0, (int) env('SECURITY_PRICE_REFRESH_AFTER_HOURS', 24)),
+
 ];

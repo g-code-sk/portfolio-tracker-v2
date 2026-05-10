@@ -93,4 +93,48 @@ class Trading212ImportRowData extends Data
 
         return $normalized === '' ? null : $normalized;
     }
+
+    public function hasTicker(): bool
+    {
+        return $this->ticker !== null;
+    }
+
+    public function hasExternalTransactionId(): bool
+    {
+        return $this->externalTransactionId !== null;
+    }
+
+    public function hasTime(): bool
+    {
+        return $this->time !== null;
+    }
+
+    public function hasShareAndPriceFields(): bool
+    {
+        return $this->numberOfShares !== null && $this->pricePerShare !== null;
+    }
+
+    public function hasCurrencyPricePerShare(): bool
+    {
+        return $this->currencyPricePerShare !== null;
+    }
+
+    public function hasThreeLetterPriceCurrency(): bool
+    {
+        return $this->currencyPricePerShare !== null && strlen($this->currencyPricePerShare) === 3;
+    }
+
+    public function hasNumericShareAndPrice(): bool
+    {
+        if ($this->numberOfShares === null || $this->pricePerShare === null) {
+            return false;
+        }
+
+        return is_numeric($this->numberOfShares) && is_numeric($this->pricePerShare);
+    }
+
+    public function hasIsin(): bool
+    {
+        return $this->isin !== null;
+    }
 }

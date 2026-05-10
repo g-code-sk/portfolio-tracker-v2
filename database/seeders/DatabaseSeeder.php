@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(SecurityDataProviderSeeder::class);
         $this->call(TransactionTypeSeeder::class);
         $this->call(UserSeeder::class);
     }

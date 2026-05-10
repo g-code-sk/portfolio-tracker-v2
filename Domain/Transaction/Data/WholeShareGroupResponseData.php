@@ -56,7 +56,7 @@ class WholeShareGroupResponseData extends Data
 
     private static function resolveMaxExecutedAt(?WholeShareBucketResponseData $bucket): ?string
     {
-        if ($bucket === null || $bucket->segments === []) {
+        if ($bucket === null || $bucket->isEmpty()) {
             return null;
         }
 
@@ -67,7 +67,7 @@ class WholeShareGroupResponseData extends Data
 
     private static function resolveMinExecutedAt(?WholeShareBucketResponseData $bucket): ?string
     {
-        if ($bucket === null || $bucket->segments === []) {
+        if ($bucket === null || $bucket->isEmpty()) {
             return null;
         }
 
@@ -78,7 +78,7 @@ class WholeShareGroupResponseData extends Data
 
     private static function resolveWeightedPricePerShare(?WholeShareBucketResponseData $bucket): ?float
     {
-        if ($bucket === null || $bucket->segments === []) {
+        if ($bucket === null || $bucket->isEmpty()) {
             return null;
         }
 
@@ -114,7 +114,7 @@ class WholeShareGroupResponseData extends Data
             return null;
         }
 
-        if ($buyBucket->segments === [] || $sellBucket->segments === []) {
+        if ($buyBucket->isEmpty() || $sellBucket->isEmpty()) {
             return null;
         }
 

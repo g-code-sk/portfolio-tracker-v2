@@ -31,6 +31,7 @@ import { useRouter } from 'vue-router'
 import LoginEmailField from '@/pages/Auth/Components/LoginEmailField.vue'
 import LoginPasswordField from '@/pages/Auth/Components/LoginPasswordField.vue'
 import axios from '@/services/axios'
+import { isUnauthorizedStatus } from '@/services/http-response-guards'
 import { setAuthState } from '@/stores/auth-session'
 import { getFieldErrors, type FieldErrors } from '@/services/api-errors'
 import { validateVuetifyForm, VUETIFY_FORM_CLIENT_VALIDATION_MESSAGE } from '@/services/vuetify-form'
@@ -70,8 +71,8 @@ const submit = async () => {
 
 		await router.push({ name: 'portfolios' })
 	} catch (err) {
-		if (isAxiosError<ApiErrorResponse<keyof LoginUserPayloadData>>(err) && err.response?.status === 401) {
-			toast.error(err.response.data?.message ?? 'Invalid email or password.')
+		if (isAxiosError<ApiErrorResponse<keyof LoginUserPayloadData>>(err) && isUnauthorizedStatus(err.response?.status)) {
+			toast.error(err.response?.data?.message ?? 'Invalid email or password.')
 		} else {
 			fieldErrors.value = getFieldErrors<LoginUserPayloadData>(err)
 
