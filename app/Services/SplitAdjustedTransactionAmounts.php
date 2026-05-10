@@ -8,8 +8,12 @@ namespace App\Services;
  */
 final readonly class SplitAdjustedTransactionAmounts
 {
+    public float $totalAmount;
+
     public function __construct(
         public float $numberOfShares,
         public float $pricePerShare,
-    ) {}
+    ) {
+        $this->totalAmount = $numberOfShares * $pricePerShare;
+    }
 }

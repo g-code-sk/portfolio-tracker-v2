@@ -2,7 +2,12 @@
 
 namespace Domain\Portfolio\Data;
 
+use App\Models\Transaction;
+use App\Services\PortfolioSecuritySplitAdjustmentService;
+use App\Services\SplitAdjustedTransactionAmounts;
+use Domain\Transaction\Enums\TransactionTypeCode;
 use Domain\Transaction\WholeShareBucketEpsilon;
+use Illuminate\Support\Collection;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -26,46 +31,66 @@ class PortfolioPositionResponseData extends Data
         public ?float $totalReturnPercent,
     ) {}
 
-    public static function fromAggregatedRow(object $row): self
+    /**
+     * @param  Collection<int, Transaction>  $transactions
+     * @param  Collection<int, SecuritySplit>  $splitsForSecurity
+     */
+    public static function fromTransactions(Collection $transactions, Collection $splitsForSecurity): self
     {
-        $currencySymbol = (string) $row->currency;
-        $investedAmount = (float) $row->invested_amount;
-        $soldAmount = (float) $row->sold_amount;
-        $totalShares = (float) $row->total_shares;
-        $currentPrice = $row->current_price !== null ? (float) $row->current_price : null;
-        $currentPriceCurrency = $row->current_price_currency !== null && $row->current_price_currency !== ''
-            ? (string) $row->current_price_currency
-            : null;
+        $splitAdjustmentService = new PortfolioSecuritySplitAdjustmentService;
+
+        $adjustedBuyTransactionsData = $transactions
+            ->filter(fn (Transaction $transaction): bool => $transaction->type->code === TransactionTypeCode::Buy)
+            ->map(function (Transaction $transaction) use ($splitsForSecurity, $splitAdjustmentService): SplitAdjustedTransactionAmounts {
+                return $splitAdjustmentService->adjust($transaction, $splitsForSecurity);
+            });
+
+        $adjustedSellTransactionsData = $transactions
+            ->filter(fn (Transaction $transaction): bool => $transaction->type->code === TransactionTypeCode::Sell)
+            ->map(function (Transaction $transaction) use ($splitsForSecurity, $splitAdjustmentService): SplitAdjustedTransactionAmounts {
+                return $splitAdjustmentService->adjust($transaction, $splitsForSecurity);
+            });
+
+        $sharesBought = collect($adjustedBuyTransactionsData)
+            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares);
+
+        $sharesSold = collect($adjustedSellTransactionsData)
+            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares);
+
+        $investedAmount = collect($adjustedBuyTransactionsData)
+            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares * $adjustedTransactionData->pricePerShare);
+
+        $soldAmount = collect($adjustedSellTransactionsData)
+            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares * $adjustedTransactionData->pricePerShare);
+
+        $totalShares = $sharesBought - $sharesSold;
+
+        $transactionForMetadata = $transactions->first();
 
         $totalGainLossAmount = self::resolveTotalGainLossAmount(
-            currencySymbol: $currencySymbol,
-            investedAmount: $investedAmount,
-            soldAmount: $soldAmount,
-            totalShares: $totalShares,
-            currentPrice: $currentPrice,
-            currentPriceCurrency: $currentPriceCurrency,
-        );
-
-        $totalReturnPercent = self::resolveTotalReturnPercent(
-            totalGainLossAmount: $totalGainLossAmount,
-            investedAmount: $investedAmount,
-        );
-
-        return new self(
-            (int) $row->security_id,
-            (int) $row->currency_id,
-            $row->ticker,
-            $row->name,
-            $currencySymbol,
-            (float) $row->shares_bought,
-            (float) $row->shares_sold,
+            $transactionForMetadata->currency->symbol,
             $investedAmount,
             $soldAmount,
             $totalShares,
-            $currentPrice,
-            $currentPriceCurrency,
-            $totalGainLossAmount,
-            $totalReturnPercent,
+            $transactionForMetadata->security->current_price,
+            $transactionForMetadata->security->current_price_currency
+        );
+
+        return new PortfolioPositionResponseData(
+            securityId: $transactionForMetadata->security_id,
+            currencyId: $transactionForMetadata->currency_id,
+            ticker: $transactionForMetadata->security->ticker,
+            name: $transactionForMetadata->security->name,
+            currencySymbol: $transactionForMetadata->currency->symbol,
+            currentPrice: $transactionForMetadata->security->current_price,
+            currentPriceCurrency: $transactionForMetadata->security->current_price_currency,
+            sharesBought: $sharesBought,
+            sharesSold: $sharesSold,
+            investedAmount: $investedAmount,
+            soldAmount: $soldAmount,
+            totalShares: $totalShares,
+            totalGainLossAmount: self::resolveTotalGainLossAmount($transactionForMetadata->currency->symbol, $investedAmount, $soldAmount, $totalShares, $transactionForMetadata->security->current_price, $transactionForMetadata->security->current_price_currency),
+            totalReturnPercent: self::resolveTotalReturnPercent($totalGainLossAmount, $investedAmount),
         );
     }
 

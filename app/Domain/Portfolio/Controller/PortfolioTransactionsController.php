@@ -42,8 +42,6 @@ class PortfolioTransactionsController extends Controller
             ->orderByDesc('executed_at')
             ->get();
 
-        // Single query for splits on every distinct security in this page — not N+1 per transaction.
-        // Improvement: cache split timelines per security across requests if this endpoint becomes hot.
         $securityIds = $transactionModels->pluck('security_id')->unique()->values()->all();
         $splitsBySecurityId = collect();
 
