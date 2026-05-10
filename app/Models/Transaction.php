@@ -70,7 +70,9 @@ class Transaction extends Model
                         WHEN transaction_types.code = ? THEN transactions.number_of_shares
                         ELSE -transactions.number_of_shares
                     END
-                ) as total_shares
+                ) as total_shares,
+                MAX(securities.current_price) as current_price,
+                MAX(securities.current_price_currency) as current_price_currency
                 ',
                 [
                     TransactionTypeCode::Buy->value,

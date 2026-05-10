@@ -32,41 +32,25 @@
 								<v-progress-circular indeterminate color="primary" size="32" />
 							</v-card-text>
 							<v-card-text v-else-if="!portfolioPositions.length" class="text-medium-emphasis py-8 text-center"> No positions yet. </v-card-text>
-							<v-table v-else>
-								<thead>
-									<tr>
-										<th class="text-left">Ticker</th>
-										<th class="text-left">Name</th>
-										<th class="text-right">Shares Bought</th>
-										<th class="text-right">Shares Sold</th>
-										<th class="text-right">Invested Amount</th>
-										<th class="text-right">Sold Amount</th>
-										<th class="text-right">Total Shares</th>
-										<th class="text-left">Currency</th>
-										<th class="text-end">Actions</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr v-for="position in portfolioPositions" :key="`${position.securityId}-${position.currencySymbol}`">
-										<td>
+							<v-card-text v-else class="d-flex flex-column ga-4">
+								<AppCollectionFilter
+									v-model="filteredPositions"
+									:items="portfolioPositions"
+									:filter-data="positionFilterDefinitions"
+								/>
+								<v-data-table :headers="positionHeaders" :items="positionTableItems" item-value="positionRowKey">
+									<template #item.ticker="{ item }">
+										<div class="d-flex align-center ga-2">
 											<AppLink
+												style="display: inline-block; min-width: 60px"
 												:to="{
 													name: 'portfolio-position-transactions',
-													params: { portfolioId, securityId: position.securityId },
-													query: { currencyId: position.currencyId },
+													params: { portfolioId, securityId: item.securityId },
+													query: { currencyId: item.currencyId },
 												}"
 											>
-												{{ position.ticker }}
+												{{ item.ticker }}
 											</AppLink>
-										</td>
-										<td>{{ position.name }}</td>
-										<td class="text-right">{{ formatDecimal(position.sharesBought) }}</td>
-										<td class="text-right">{{ formatDecimal(position.sharesSold) }}</td>
-										<td class="text-right">{{ formatDecimal(position.investedAmount) }}</td>
-										<td class="text-right">{{ formatDecimal(position.soldAmount) }}</td>
-										<td class="text-right">{{ formatDecimal(position.totalShares) }}</td>
-										<td>{{ position.currencySymbol }}</td>
-										<td class="text-end">
 											<v-tooltip text="Buy splits by whole share" location="top">
 												<template #activator="{ props: tooltipActivatorProps }">
 													<v-btn
@@ -77,18 +61,46 @@
 														aria-label="Buy splits by whole share"
 														:to="{
 															name: 'portfolio-position-whole-share-buy-segments',
-															params: { portfolioId, securityId: position.securityId },
-															query: { currencyId: position.currencyId },
+															params: { portfolioId, securityId: item.securityId },
+															query: { currencyId: item.currencyId },
 														}"
 													>
 														<v-icon>mdi-view-split-vertical</v-icon>
 													</v-btn>
 												</template>
 											</v-tooltip>
-										</td>
-									</tr>
-								</tbody>
-							</v-table>
+										</div>
+									</template>
+									<template #item.sharesBought="{ item }">
+										<span class="d-flex justify-end">{{ formatDecimal(item.sharesBought) }}</span>
+									</template>
+									<template #item.sharesSold="{ item }">
+										<span class="d-flex justify-end">{{ formatDecimal(item.sharesSold) }}</span>
+									</template>
+									<template #item.investedAmount="{ item }">
+										<span class="d-flex justify-end">{{ formatAmountWithCurrency(item.investedAmount, item.currencySymbol) }}</span>
+									</template>
+									<template #item.soldAmount="{ item }">
+										<span class="d-flex justify-end">{{ formatAmountWithCurrency(item.soldAmount, item.currencySymbol) }}</span>
+									</template>
+									<template #item.totalShares="{ item }">
+										<span class="d-flex justify-end">{{ formatDecimal(item.totalShares) }}</span>
+									</template>
+									<template #item.currentPrice="{ item }">
+										<span class="d-flex justify-end">{{ formatQuotePrice(item) }}</span>
+									</template>
+									<template #item.totalGainLossAmount="{ item }">
+										<span class="d-flex justify-end" :class="getGainLossTextClass(item.totalGainLossAmount)">
+											{{ formatGainLossAmount(item.totalGainLossAmount, item.currencySymbol) }}
+										</span>
+									</template>
+									<template #item.totalReturnPercent="{ item }">
+										<span class="d-flex justify-end" :class="getGainLossTextClass(item.totalReturnPercent)">
+											{{ formatReturnPercent(item.totalReturnPercent) }}
+										</span>
+									</template>
+								</v-data-table>
+							</v-card-text>
 						</v-card>
 					</v-col>
 				</v-row>
@@ -104,14 +116,28 @@ import { useRoute } from 'vue-router'
 import { toast } from 'vue3-toastify'
 import PortfolioImportAction from './Components/PortfolioImportAction.vue'
 import AppBreadcrumbs, { type AppBreadcrumbItem } from '@/components/AppBreadcrumbs.vue'
+import AppCollectionFilter from '@/components/Filters/AppCollectionFilter.vue'
 import AppLink from '@/components/AppLink.vue'
 import { fetchPortfolio, fetchPortfolioPositions } from '@/services/portfolio'
+import { formatGainLossAmount, formatReturnPercent, getGainLossTextClass } from '@/format/gain-loss'
 import { formatDecimal } from '@/format/number'
+import { FilterType, type FilterDefinition } from '@/types/filter'
 import type { PortfolioPositionResponseData, PortfolioResponseData } from '@/types/generated'
+
+type PositionTableItem = PortfolioPositionResponseData & { positionRowKey: string }
 
 const route = useRoute()
 const portfolio = ref<PortfolioResponseData | null>(null)
 const portfolioPositions = ref<PortfolioPositionResponseData[]>([])
+const filteredPositions = ref<PortfolioPositionResponseData[]>([])
+
+const positionFilterDefinitions: FilterDefinition<PortfolioPositionResponseData>[] = [
+	{
+		type: FilterType.String,
+		keys: ['ticker', 'name'],
+		label: 'Search positions',
+	},
+]
 const isLoadingPortfolio = ref(false)
 const isLoadingPositions = ref(false)
 
@@ -121,6 +147,38 @@ const breadcrumbItems = computed<AppBreadcrumbItem[]>(() => [
 	{ title: 'Portfolios', to: { name: 'portfolios' } },
 	{ title: portfolio.value?.name ?? 'Portfolio', disabled: true },
 ])
+
+const positionHeaders = [
+	{ title: 'Ticker', key: 'ticker', sortable: true },
+	{ title: 'Name', key: 'name', sortable: true },
+	// { title: 'Shares Bought', key: 'sharesBought', sortable: true, align: 'end' as const },
+	// { title: 'Shares Sold', key: 'sharesSold', sortable: true, align: 'end' as const },
+	{ title: 'Invested Amount', key: 'investedAmount', sortable: true, align: 'end' as const },
+	{ title: 'Sold Amount', key: 'soldAmount', sortable: true, align: 'end' as const },
+	{ title: 'Total Shares', key: 'totalShares', sortable: true, align: 'end' as const },
+	{ title: 'Current price', key: 'currentPrice', sortable: true, align: 'end' as const },
+	{ title: 'Gain/Loss', key: 'totalGainLossAmount', sortable: true, align: 'end' as const },
+	{ title: 'Return %', key: 'totalReturnPercent', sortable: true, align: 'end' as const },
+]
+
+const positionTableItems = computed<PositionTableItem[]>(() =>
+	filteredPositions.value.map((position) => ({
+		...position,
+		positionRowKey: `${position.securityId}-${position.currencyId}`,
+	})),
+)
+
+const formatAmountWithCurrency = (amount: number, currencySymbol: string): string => `${formatDecimal(amount)} ${currencySymbol}`
+
+const formatQuotePrice = (item: PortfolioPositionResponseData): string => {
+	if (item.currentPrice === null) {
+		return '—'
+	}
+
+	const amount = formatDecimal(item.currentPrice)
+
+	return item.currentPriceCurrency ? `${amount} ${item.currentPriceCurrency}` : amount
+}
 
 const loadPortfolio = async (): Promise<void> => {
 	isLoadingPortfolio.value = true

@@ -25,17 +25,8 @@ class PortfolioPositionsController extends Controller
             ->get();
 
         $positions = $aggregatedRows->map(
-            fn (object $aggregatedRow): PortfolioPositionResponseData => new PortfolioPositionResponseData(
-                (int) $aggregatedRow->security_id,
-                (int) $aggregatedRow->currency_id,
-                $aggregatedRow->ticker,
-                $aggregatedRow->name,
-                $aggregatedRow->currency,
-                (float) $aggregatedRow->shares_bought,
-                (float) $aggregatedRow->shares_sold,
-                (float) $aggregatedRow->invested_amount,
-                (float) $aggregatedRow->sold_amount,
-                (float) $aggregatedRow->total_shares,
+            fn (object $aggregatedRow): PortfolioPositionResponseData => PortfolioPositionResponseData::fromAggregatedRow(
+                $aggregatedRow
             )
         );
 

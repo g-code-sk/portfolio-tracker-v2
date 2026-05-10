@@ -4,9 +4,20 @@
 			<AppBreadcrumbs :items="breadcrumbItems" />
 
 			<v-row class="align-center">
-				<v-col cols="12">
-					<h1 class="text-h3 font-weight-bold mb-2">{{ positionTitle }}</h1>
-					<p class="text-subtitle-1 text-medium-emphasis">Transactions for the selected portfolio position.</p>
+				<v-col cols="12" class="d-flex flex-wrap align-center ga-4">
+					<div class="flex-grow-1">
+						<h1 class="text-h3 font-weight-bold mb-2">{{ positionTitle }}</h1>
+						<p class="text-subtitle-1 text-medium-emphasis">Transactions for the selected portfolio position.</p>
+					</div>
+					<v-btn
+						v-if="canViewWholeShareGroups"
+						color="primary"
+						variant="tonal"
+						prepend-icon="mdi-view-split-vertical"
+						:to="wholeShareGroupsRoute"
+					>
+						Whole share buy/sell groups
+					</v-btn>
 				</v-col>
 			</v-row>
 
@@ -35,10 +46,10 @@
 								<span class="d-flex justify-end">{{ formatDecimal(item.numberOfShares) }}</span>
 							</template>
 							<template #item.pricePerShare="{ item }">
-								<span class="d-flex justify-end">{{ formatDecimal(item.pricePerShare) }}</span>
+								<span class="d-flex justify-end">{{ formatDecimal(item.pricePerShare) }} {{ item.currencySymbol }}</span>
 							</template>
 							<template #item.totalAmount="{ item }">
-								<span class="d-flex justify-end">{{ formatDecimal(item.totalAmount) }}</span>
+								<span class="d-flex justify-end">{{ formatDecimal(item.totalAmount) }} {{ item.currencySymbol }}</span>
 							</template>
 						</v-data-table>
 					</v-card>
@@ -62,6 +73,11 @@ const securityTickerForPosition = (
 	response: PortfolioTransactionsResponseData | null,
 	fallbackRow: PortfolioTransactionResponseData | undefined,
 ): string | null => response?.securityTicker ?? fallbackRow?.ticker ?? null
+
+const securityNameForPosition = (
+	response: PortfolioTransactionsResponseData | null,
+	fallbackRow: PortfolioTransactionResponseData | undefined,
+): string | null => response?.securityName ?? fallbackRow?.name ?? null
 
 const currencySymbolForPosition = (
 	response: PortfolioTransactionsResponseData | null,
@@ -88,13 +104,25 @@ const currencyId = computed(() => {
 const securityTicker = computed(() =>
 	securityTickerForPosition(transactionsResponse.value, transactions.value[0]),
 )
+const securityName = computed(() =>
+	securityNameForPosition(transactionsResponse.value, transactions.value[0]),
+)
 const currencySymbol = computed(() =>
 	currencySymbolForPosition(transactionsResponse.value, transactions.value[0]),
 )
 const positionTitle = computed(() => {
+	const ticker = securityTicker.value ?? 'Position'
+	const name = securityName.value ? ` — ${securityName.value}` : ''
 	const label = currencySymbol.value ? ` (${currencySymbol.value})` : ''
-	return `${securityTicker.value ?? 'Position'}${label}`
+	return `${ticker}${name}${label}`
 })
+
+const canViewWholeShareGroups = computed(() => currencyId.value !== null)
+const wholeShareGroupsRoute = computed(() => ({
+	name: 'portfolio-position-whole-share-buy-segments',
+	params: { portfolioId: portfolioId.value, securityId: securityId.value },
+	query: currencyId.value !== null ? { currencyId: currencyId.value } : {},
+}))
 
 const breadcrumbItems = computed<AppBreadcrumbItem[]>(() => [
 	{ title: 'Portfolios', to: { name: 'portfolios' } },
@@ -107,13 +135,10 @@ const breadcrumbItems = computed<AppBreadcrumbItem[]>(() => [
 
 const headers = [
 	{ title: 'Date', key: 'executedAt', sortable: true },
-	{ title: 'Type', key: 'typeCode', sortable: true },
-	{ title: 'Ticker', key: 'ticker', sortable: true },
-	{ title: 'Name', key: 'name', sortable: true },
+	{ title: 'Type', key: 'typeName', sortable: true },
 	{ title: 'Shares', key: 'numberOfShares', sortable: true, align: 'end' as const },
 	{ title: 'Price / Share', key: 'pricePerShare', sortable: true, align: 'end' as const },
 	{ title: 'Total', key: 'totalAmount', sortable: true, align: 'end' as const },
-	{ title: 'Currency', key: 'currencySymbol', sortable: true },
 ]
 
 const loadTransactions = async (): Promise<void> => {
