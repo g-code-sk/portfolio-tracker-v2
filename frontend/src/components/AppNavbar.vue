@@ -27,6 +27,7 @@ import { ref } from 'vue'
 import { toast } from 'vue3-toastify'
 import { useRouter } from 'vue-router'
 import axios from '@/services/axios'
+import { isAuthOrCsrfMismatchStatus } from '@/services/http-response-guards'
 import { useAuthSession } from '@/stores/auth-session'
 import type { ApiSuccessResponse } from '@/types/api'
 import type { AuthUserSessionResponseData } from '@/types/generated'
@@ -48,7 +49,7 @@ const logout = async () => {
 		clearAuthState()
 		await router.push({ name: 'login' })
 	} catch (error) {
-		if (isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 419)) {
+		if (isAxiosError(error) && isAuthOrCsrfMismatchStatus(error.response?.status)) {
 			clearAuthState()
 			await router.push({ name: 'login' })
 			return

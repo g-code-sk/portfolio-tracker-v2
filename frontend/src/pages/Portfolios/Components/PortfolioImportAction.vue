@@ -50,6 +50,9 @@ const formImportType = ref<TransactionImportType | null>(null)
 const formFile = ref<File | null>(null)
 const formRef = ref<VForm | null>(null)
 
+const hasImportFileAndTypeSelected = (importType: TransactionImportType | null, file: File | null): boolean =>
+	importType !== null && file !== null
+
 const resetFormState = (): void => {
 	formImportType.value = null
 	formFile.value = null
@@ -83,7 +86,7 @@ const submitImportForm = async (): Promise<void> => {
 		return
 	}
 
-	if (!formImportType.value || !formFile.value) {
+	if (!hasImportFileAndTypeSelected(formImportType.value, formFile.value)) {
 		return
 	}
 
@@ -91,8 +94,8 @@ const submitImportForm = async (): Promise<void> => {
 
 	try {
 		await uploadTransactionImport(props.portfolioId, {
-			importType: formImportType.value,
-			file: formFile.value,
+			importType: formImportType.value!,
+			file: formFile.value!,
 		})
 		isDialogOpen.value = false
 		emit('imported')

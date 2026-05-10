@@ -11,6 +11,33 @@ export const getFieldErrors = <TInput extends Record<string, unknown>>(error: un
 	return (error.response?.data?.errors as FieldErrors<TInput>) ?? {}
 }
 
+const isNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value !== ''
+
+/**
+ * Laravel validation `errors` object: field keys → string messages or arrays of strings.
+ */
+const collectValidationErrorMessages = (errors: unknown): string[] => {
+	if (!errors || typeof errors !== 'object') {
+		return []
+	}
+
+	const parts: string[] = []
+
+	for (const messages of Object.values(errors)) {
+		if (!Array.isArray(messages)) {
+			continue
+		}
+
+		for (const msg of messages) {
+			if (isNonEmptyString(msg)) {
+				parts.push(msg)
+			}
+		}
+	}
+
+	return parts
+}
+
 /** Uses Laravel validation `errors` when present (422), then top-level `message`, then fallback. */
 export const getApiUserFacingMessage = (error: unknown, fallbackMessage: string): string => {
 	if (!isAxiosError<ApiErrorResponse>(error)) {
@@ -23,27 +50,13 @@ export const getApiUserFacingMessage = (error: unknown, fallbackMessage: string)
 		return fallbackMessage
 	}
 
-	const errors = data.errors
+	const validationMessages = collectValidationErrorMessages(data.errors)
 
-	if (errors && typeof errors === 'object') {
-		const parts: string[] = []
-
-		for (const messages of Object.values(errors)) {
-			if (Array.isArray(messages)) {
-				for (const msg of messages) {
-					if (typeof msg === 'string' && msg !== '') {
-						parts.push(msg)
-					}
-				}
-			}
-		}
-
-		if (parts.length > 0) {
-			return parts.join(' ')
-		}
+	if (validationMessages.length > 0) {
+		return validationMessages.join(' ')
 	}
 
-	if (typeof data.message === 'string' && data.message !== '') {
+	if (isNonEmptyString(data.message)) {
 		return data.message
 	}
 

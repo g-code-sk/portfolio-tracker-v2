@@ -58,6 +58,16 @@ import { formatDecimal } from '@/format/number'
 import { formatDate, formatDateTime } from '@/format/date'
 import type { PortfolioTransactionResponseData, PortfolioTransactionsResponseData } from '@/types/generated'
 
+const securityTickerForPosition = (
+	response: PortfolioTransactionsResponseData | null,
+	fallbackRow: PortfolioTransactionResponseData | undefined,
+): string | null => response?.securityTicker ?? fallbackRow?.ticker ?? null
+
+const currencySymbolForPosition = (
+	response: PortfolioTransactionsResponseData | null,
+	fallbackRow: PortfolioTransactionResponseData | undefined,
+): string => response?.currencySymbol ?? fallbackRow?.currencySymbol ?? ''
+
 const route = useRoute()
 const transactions = ref<PortfolioTransactionResponseData[]>([])
 const transactionsResponse = ref<PortfolioTransactionsResponseData | null>(null)
@@ -75,8 +85,12 @@ const currencyId = computed(() => {
 
 	return Number.isNaN(parsedValue) ? null : parsedValue
 })
-const securityTicker = computed(() => transactionsResponse.value?.securityTicker ?? transactions.value[0]?.ticker ?? null)
-const currencySymbol = computed(() => transactionsResponse.value?.currencySymbol ?? transactions.value[0]?.currencySymbol ?? '')
+const securityTicker = computed(() =>
+	securityTickerForPosition(transactionsResponse.value, transactions.value[0]),
+)
+const currencySymbol = computed(() =>
+	currencySymbolForPosition(transactionsResponse.value, transactions.value[0]),
+)
 const positionTitle = computed(() => {
 	const label = currencySymbol.value ? ` (${currencySymbol.value})` : ''
 	return `${securityTicker.value ?? 'Position'}${label}`

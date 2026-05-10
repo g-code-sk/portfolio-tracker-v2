@@ -28,31 +28,29 @@ const props = withDefaults(
 const selectedBuyYear = defineModel<number | null>('selectedBuyYear', { required: true })
 const selectedSellYear = defineModel<number | null>('selectedSellYear', { required: true })
 
-const availableBuyYears = computed<number[]>(() => {
+const sortedYearsFromGroups = (
+	groups: WholeShareGroupResponseData[],
+	getDateString: (group: WholeShareGroupResponseData) => string | null | undefined,
+): number[] => {
 	const yearSet = new Set<number>()
 
-	for (const group of props.groups) {
-		const buyYear = getYearFromDateString(group.buyDate)
-		if (buyYear !== null) {
-			yearSet.add(buyYear)
+	for (const group of groups) {
+		const year = getYearFromDateString(getDateString(group))
+
+		if (year !== null) {
+			yearSet.add(year)
 		}
 	}
 
 	return Array.from(yearSet).sort((a, b) => b - a)
-})
+}
 
-const availableSellYears = computed<number[]>(() => {
-	const yearSet = new Set<number>()
+const shouldClearYearSelection = (selected: number | null, available: number[]): boolean =>
+	selected !== null && !available.includes(selected)
 
-	for (const group of props.groups) {
-		const sellYear = getYearFromDateString(group.sellDate)
-		if (sellYear !== null) {
-			yearSet.add(sellYear)
-		}
-	}
+const availableBuyYears = computed<number[]>(() => sortedYearsFromGroups(props.groups, (group) => group.buyDate))
 
-	return Array.from(yearSet).sort((a, b) => b - a)
-})
+const availableSellYears = computed<number[]>(() => sortedYearsFromGroups(props.groups, (group) => group.sellDate))
 
 const buyYearItems = computed<YearItem[]>(() => {
 	const allYearsItem: YearItem = { label: 'All years', value: null }
@@ -71,11 +69,11 @@ const sellYearItems = computed<YearItem[]>(() => {
 watch(
 	() => props.groups,
 	() => {
-		if (selectedBuyYear.value !== null && !availableBuyYears.value.includes(selectedBuyYear.value)) {
+		if (shouldClearYearSelection(selectedBuyYear.value, availableBuyYears.value)) {
 			selectedBuyYear.value = null
 		}
 
-		if (selectedSellYear.value !== null && !availableSellYears.value.includes(selectedSellYear.value)) {
+		if (shouldClearYearSelection(selectedSellYear.value, availableSellYears.value)) {
 			selectedSellYear.value = null
 		}
 	},
