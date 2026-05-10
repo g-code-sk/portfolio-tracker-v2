@@ -5,28 +5,35 @@ namespace Tests\Unit;
 use Carbon\CarbonImmutable;
 use Domain\Security\Enums\SecurityDataProviderCode;
 use Domain\Security\Service\YahooCurrentSecurityPriceProvider;
-use Illuminate\Support\Facades\Http;
+use Mockery;
+use Mockery\MockInterface;
+use Scheb\YahooFinanceApi\ApiClient;
+use Scheb\YahooFinanceApi\Results\Quote;
 use Tests\TestCase;
 
 class YahooCurrentSecurityPriceProviderTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        Mockery::close();
+
+        parent::tearDown();
+    }
+
     public function test_it_maps_quote_payload_to_current_price_data(): void
     {
-        Http::fake([
-            'query1.finance.yahoo.com/*' => Http::response([
-                'quoteResponse' => [
-                    'result' => [
-                        [
-                            'regularMarketPrice' => 189.52,
-                            'currency' => 'usd',
-                            'regularMarketTime' => 1710000000,
-                        ],
-                    ],
-                ],
-            ]),
-        ]);
+        $this->mockYahooFinanceClient(function (MockInterface $client): void {
+            $client->shouldReceive('getQuote')
+                ->once()
+                ->with('AAPL')
+                ->andReturn(new Quote([
+                    'regularMarketPrice' => 189.52,
+                    'currency' => 'usd',
+                    'regularMarketTime' => CarbonImmutable::createFromTimestampUTC(1710000000),
+                ]));
+        });
 
-        $provider = new YahooCurrentSecurityPriceProvider;
+        $provider = $this->app->make(YahooCurrentSecurityPriceProvider::class);
         $result = $provider->fetchCurrentPriceData('AAPL');
 
         $this->assertNotNull($result);
@@ -39,20 +46,28 @@ class YahooCurrentSecurityPriceProviderTest extends TestCase
 
     public function test_it_returns_null_when_quote_payload_is_missing_price(): void
     {
-        Http::fake([
-            'query1.finance.yahoo.com/*' => Http::response([
-                'quoteResponse' => [
-                    'result' => [
-                        [
-                            'currency' => 'USD',
-                        ],
-                    ],
-                ],
-            ]),
-        ]);
+        $this->mockYahooFinanceClient(function (MockInterface $client): void {
+            $client->shouldReceive('getQuote')
+                ->once()
+                ->with('AAPL')
+                ->andReturn(new Quote([
+                    'currency' => 'USD',
+                ]));
+        });
 
-        $provider = new YahooCurrentSecurityPriceProvider;
+        $provider = $this->app->make(YahooCurrentSecurityPriceProvider::class);
 
         $this->assertNull($provider->fetchCurrentPriceData('AAPL'));
+    }
+
+    /**
+     * @param  callable(MockInterface): void  $expectations
+     */
+    private function mockYahooFinanceClient(callable $expectations): void
+    {
+        $client = Mockery::mock(ApiClient::class);
+        $expectations($client);
+
+        $this->app->instance(ApiClient::class, $client);
     }
 }

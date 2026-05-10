@@ -6,11 +6,16 @@ use Carbon\CarbonImmutable;
 use Domain\Security\Contract\CurrentSecurityPriceProviderInterface;
 use Domain\Security\Data\CurrentSecurityPriceData;
 use Domain\Security\Enums\SecurityDataProviderCode;
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Exception\GuzzleException;
+use Scheb\YahooFinanceApi\ApiClient;
+use Scheb\YahooFinanceApi\Exception\ApiException;
+use Scheb\YahooFinanceApi\Results\Quote;
 
 class YahooCurrentSecurityPriceProvider implements CurrentSecurityPriceProviderInterface
 {
-    private const string QUOTE_URL = 'https://query1.finance.yahoo.com/v7/finance/quote';
+    public function __construct(
+        private readonly ApiClient $apiClient,
+    ) {}
 
     public function fetchCurrentPriceData(string $ticker, ?string $name = null, ?string $isin = null): ?CurrentSecurityPriceData
     {
@@ -20,54 +25,56 @@ class YahooCurrentSecurityPriceProvider implements CurrentSecurityPriceProviderI
             return null;
         }
 
-        $response = Http::acceptJson()
-            ->retry(2, 200)
-            ->timeout(10)
-            ->get(self::QUOTE_URL, [
-                'symbols' => $normalizedTicker,
-            ]);
+        try {
+            $quote = $this->apiClient->getQuote($normalizedTicker);
+        } catch (ApiException|GuzzleException $exception) {
 
-        if (! $response->successful()) {
             return null;
         }
 
-        /** @var array<string, mixed> $payload */
-        $payload = $response->json();
-        /** @var array<int, array<string, mixed>> $results */
-        $results = data_get($payload, 'quoteResponse.result', []);
-        /** @var array<string, mixed>|null $firstResult */
-        $firstResult = $results[0] ?? null;
-
-        if ($firstResult === null) {
+        if (! $quote instanceof Quote) {
             return null;
         }
 
-        $price = data_get($firstResult, 'regularMarketPrice');
+        $price = $quote->getRegularMarketPrice();
 
-        if (! is_numeric($price)) {
+        if (! $this->hasPrice($price)) {
             return null;
         }
 
-        $currency = data_get($firstResult, 'currency');
+        $currency = $quote->getCurrency();
 
-        if (! is_string($currency) || $currency === '') {
+        if (! $this->hasCurrency($currency)) {
             return null;
-        }
-
-        $quotedAtTimestamp = data_get($firstResult, 'regularMarketTime');
-
-        if (is_numeric($quotedAtTimestamp)) {
-            $quotedAt = CarbonImmutable::createFromTimestampUTC((int) $quotedAtTimestamp);
-        } else {
-            $quotedAt = CarbonImmutable::now('UTC');
         }
 
         return new CurrentSecurityPriceData(
             ticker: $normalizedTicker,
-            price: number_format((float) $price, 10, '.', ''),
+            price: number_format($price, 10, '.', ''),
             currency: strtoupper($currency),
-            quotedAt: $quotedAt,
+            quotedAt: $this->resolveQuotedAt($quote),
             providerCode: SecurityDataProviderCode::Yahoo,
         );
+    }
+
+    private function hasPrice(?float $price): bool
+    {
+        return is_numeric($price);
+    }
+
+    private function hasCurrency(?string $currency): bool
+    {
+        return is_string($currency) && $currency !== '';
+    }
+
+    private function resolveQuotedAt(Quote $quote): CarbonImmutable
+    {
+        $quotedAt = $quote->getRegularMarketTime();
+
+        if ($quotedAt === null) {
+            return CarbonImmutable::now('UTC');
+        }
+
+        return CarbonImmutable::instance($quotedAt);
     }
 }
