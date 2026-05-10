@@ -89,6 +89,16 @@
 									<template #item.currentPrice="{ item }">
 										<span class="d-flex justify-end">{{ formatQuotePrice(item) }}</span>
 									</template>
+									<template #item.totalGainLossAmount="{ item }">
+										<span class="d-flex justify-end" :class="getGainLossTextClass(item.totalGainLossAmount)">
+											{{ formatGainLossAmount(item.totalGainLossAmount, item.currencySymbol) }}
+										</span>
+									</template>
+									<template #item.totalReturnPercent="{ item }">
+										<span class="d-flex justify-end" :class="getGainLossTextClass(item.totalReturnPercent)">
+											{{ formatReturnPercent(item.totalReturnPercent) }}
+										</span>
+									</template>
 								</v-data-table>
 							</v-card-text>
 						</v-card>
@@ -109,6 +119,7 @@ import AppBreadcrumbs, { type AppBreadcrumbItem } from '@/components/AppBreadcru
 import AppCollectionFilter from '@/components/Filters/AppCollectionFilter.vue'
 import AppLink from '@/components/AppLink.vue'
 import { fetchPortfolio, fetchPortfolioPositions } from '@/services/portfolio'
+import { formatGainLossAmount, formatReturnPercent, getGainLossTextClass } from '@/format/gain-loss'
 import { formatDecimal } from '@/format/number'
 import { FilterType, type FilterDefinition } from '@/types/filter'
 import type { PortfolioPositionResponseData, PortfolioResponseData } from '@/types/generated'
@@ -146,6 +157,8 @@ const positionHeaders = [
 	{ title: 'Sold Amount', key: 'soldAmount', sortable: true, align: 'end' as const },
 	{ title: 'Total Shares', key: 'totalShares', sortable: true, align: 'end' as const },
 	{ title: 'Current price', key: 'currentPrice', sortable: true, align: 'end' as const },
+	{ title: 'Gain/Loss', key: 'totalGainLossAmount', sortable: true, align: 'end' as const },
+	{ title: 'Return %', key: 'totalReturnPercent', sortable: true, align: 'end' as const },
 ]
 
 const positionTableItems = computed<PositionTableItem[]>(() =>

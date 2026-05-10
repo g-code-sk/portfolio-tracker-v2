@@ -36,6 +36,8 @@ soldAmount: number,
 totalShares: number,
 currentPrice: number | null,
 currentPriceCurrency: string | null,
+totalGainLossAmount: number | null,
+totalReturnPercent: number | null,
 };
 export type PortfolioPositionsResponseData = {
 positions: Array<any>,
