@@ -8,7 +8,6 @@ use Carbon\CarbonImmutable;
 use Domain\Transaction\Data\SplitAdjustedBuySellTotals;
 use Domain\Transaction\Data\SplitAdjustedTransaction;
 use Domain\Transaction\Data\SplitAdjustedTransactionAmounts;
-use Domain\Transaction\Enums\TransactionTypeCode;
 use Illuminate\Support\Collection;
 
 /**
@@ -56,31 +55,8 @@ class PortfolioSecuritySplitAdjustmentService
      */
     public function summarizeBuySell(Collection $transactions, Collection $splits): SplitAdjustedBuySellTotals
     {
-        $adjustedBuyTransactionsData = $transactions
-            ->filter(fn (Transaction $transaction): bool => $transaction->type->code === TransactionTypeCode::Buy)
-            ->map(fn (Transaction $transaction): SplitAdjustedTransactionAmounts => $this->adjust($transaction, $splits));
-
-        $adjustedSellTransactionsData = $transactions
-            ->filter(fn (Transaction $transaction): bool => $transaction->type->code === TransactionTypeCode::Sell)
-            ->map(fn (Transaction $transaction): SplitAdjustedTransactionAmounts => $this->adjust($transaction, $splits));
-
-        $sharesBought = collect($adjustedBuyTransactionsData)
-            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares);
-
-        $sharesSold = collect($adjustedSellTransactionsData)
-            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares);
-
-        $investedAmount = collect($adjustedBuyTransactionsData)
-            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares * $adjustedTransactionData->pricePerShare);
-
-        $soldAmount = collect($adjustedSellTransactionsData)
-            ->sum(fn (SplitAdjustedTransactionAmounts $adjustedTransactionData): float => $adjustedTransactionData->numberOfShares * $adjustedTransactionData->pricePerShare);
-
-        return new SplitAdjustedBuySellTotals(
-            sharesBought: $sharesBought,
-            sharesSold: $sharesSold,
-            investedAmount: $investedAmount,
-            soldAmount: $soldAmount,
+        return SplitAdjustedBuySellTotals::fromSplitAdjustedTransactions(
+            $this->collectSplitAdjustedTransactions($transactions, $splits)
         );
     }
 

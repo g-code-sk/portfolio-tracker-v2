@@ -11,6 +11,7 @@ use App\Services\PortfolioSecuritySplitAdjustmentService;
 use Domain\Portfolio\Data\PortfolioWholeShareBuySegmentsQueryData;
 use Domain\Transaction\Action\SplitTransactionsAtWholeShareBoundariesAction;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -25,20 +26,10 @@ class PortfolioWholeShareBuySegmentsController extends Controller
     ): JsonResponse {
         Gate::authorize('view', $portfolio);
 
-        $transactions = Transaction::query()
-            ->where('portfolio_id', $portfolio->id)
-            ->where('security_id', $queryData->securityId)
-            ->where('currency_id', $queryData->currencyId)
-            ->with(['security', 'currency', 'type'])
-            ->orderBy('executed_at')
-            ->get();
+        $transactions = $this->getTransactions($portfolio, $queryData);
+        $splitsForSecurity = $this->getSplitsForSecurity($queryData->securityId);
 
-        $splitsForSecurity = SecuritySplit::query()
-            ->where('security_id', $queryData->securityId)
-            ->orderBy('effective_on')
-            ->get();
-
-        $data = $splitTransactionsAtWholeShareBoundaries->execute(
+        $wholeShareGroups = $splitTransactionsAtWholeShareBoundaries->execute(
             $transactions,
             $splitsForSecurity,
             $splitAdjustmentService,
@@ -48,7 +39,32 @@ class PortfolioWholeShareBuySegmentsController extends Controller
         return $apiResponse->make(
             message: 'Whole share segments fetched successfully.',
             status: Response::HTTP_OK,
-            data: $data,
+            data: $wholeShareGroups,
         );
+    }
+
+    /**
+     * @return Collection<int, Transaction>
+     */
+    private function getTransactions(Portfolio $portfolio, PortfolioWholeShareBuySegmentsQueryData $queryData): Collection
+    {
+        return Transaction::query()
+            ->where('portfolio_id', $portfolio->id)
+            ->where('security_id', $queryData->securityId)
+            ->where('currency_id', $queryData->currencyId)
+            ->with(['security', 'currency', 'type'])
+            ->orderBy('executed_at')
+            ->get();
+    }
+
+    /**
+     * @return Collection<int, SecuritySplit>
+     */
+    private function getSplitsForSecurity(int $securityId): Collection
+    {
+        return SecuritySplit::query()
+            ->where('security_id', $securityId)
+            ->orderBy('effective_on')
+            ->get();
     }
 }

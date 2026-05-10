@@ -5,6 +5,8 @@ namespace Domain\Portfolio\Data;
 use App\Models\SecuritySplit;
 use App\Models\Transaction;
 use App\Services\PortfolioSecuritySplitAdjustmentService;
+use Domain\Transaction\Data\SplitAdjustedBuySellTotals;
+use Domain\Transaction\Data\SplitAdjustedTransaction;
 use Domain\Transaction\WholeShareBucketEpsilon;
 use Illuminate\Support\Collection;
 use Spatie\LaravelData\Data;
@@ -32,14 +34,29 @@ class PortfolioPositionResponseData extends Data
 
     /**
      * @param  Collection<int, Transaction>  $transactions
-     * @param  Collection<int, SecuritySplit>  $splitsForSecurity
+     * @param  Collection<int, SecuritySplit>  $splits
      */
     public static function fromTransactions(
         Collection $transactions,
-        Collection $splitsForSecurity,
+        Collection $splits,
         PortfolioSecuritySplitAdjustmentService $splitAdjustmentService,
     ): self {
-        $totals = $splitAdjustmentService->summarizeBuySell($transactions, $splitsForSecurity);
+        $splitAdjustedTransactions = $transactions->map(function (Transaction $transaction) use ($splitAdjustmentService, $splits): SplitAdjustedTransaction {
+            return SplitAdjustedTransaction::from(
+                $transaction,
+                $splitAdjustmentService->adjust($transaction, $splits),
+            );
+        });
+
+        return self::fromSplitAdjustedTransactions($splitAdjustedTransactions);
+    }
+
+    /**
+     * @param  Collection<int, SplitAdjustedTransaction>  $splitAdjustedTransactions
+     */
+    private static function fromSplitAdjustedTransactions(Collection $splitAdjustedTransactions): self
+    {
+        $totals = SplitAdjustedBuySellTotals::fromSplitAdjustedTransactions($splitAdjustedTransactions);
 
         $sharesBought = $totals->sharesBought;
         $sharesSold = $totals->sharesSold;
@@ -47,7 +64,7 @@ class PortfolioPositionResponseData extends Data
         $soldAmount = $totals->soldAmount;
         $totalShares = $totals->totalShares();
 
-        $transactionForMetadata = $transactions->first();
+        $transactionForMetadata = $splitAdjustedTransactions->first()->transaction;
 
         $totalGainLossAmount = self::resolveTotalGainLossAmount(
             $transactionForMetadata->currency->symbol,

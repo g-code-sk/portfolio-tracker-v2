@@ -26,6 +26,42 @@ class PortfolioTransactionsController extends Controller
     ): JsonResponse {
         Gate::authorize('view', $portfolio);
 
+        $transactionModels = $this->getTransactions($portfolio, $queryData);
+
+        /** @var array<int, int> $securityIds */
+        $securityIds = $transactionModels->pluck('security_id')->unique()->values()->all();
+
+        if ($securityIds === []) {
+            return $apiResponse->make(
+                message: 'Portfolio transactions fetched successfully.',
+                status: Response::HTTP_OK,
+                data: new PortfolioTransactionsResponseData([], $portfolio->name),
+            );
+        }
+
+        $splitsBySecurityId = $this->getSplitsBySecurityIds($securityIds);
+
+        $transactions = PortfolioTransactionResponseData::fromTransactions(
+            $transactionModels,
+            $splitsBySecurityId,
+            $splitAdjustmentService,
+        );
+
+        return $apiResponse->make(
+            message: 'Portfolio transactions fetched successfully.',
+            status: Response::HTTP_OK,
+            data: new PortfolioTransactionsResponseData(
+                $transactions,
+                $portfolio->name,
+            ),
+        );
+    }
+
+    /**
+     * @return Collection<int, Transaction>
+     */
+    private function getTransactions(Portfolio $portfolio, PortfolioTransactionsQueryData $queryData): Collection
+    {
         $transactionQuery = Transaction::query()
             ->where('portfolio_id', $portfolio->id)
             ->with(['security', 'currency', 'type']);
@@ -38,38 +74,21 @@ class PortfolioTransactionsController extends Controller
             $transactionQuery->where('currency_id', $queryData->currencyId);
         }
 
-        $transactionModels = $transactionQuery
+        return $transactionQuery
             ->orderByDesc('executed_at')
             ->get();
+    }
 
-        $securityIds = $transactionModels->pluck('security_id')->unique()->values()->all();
-        $splitsBySecurityId = collect();
-
-        if ($securityIds !== []) {
-            $splitsBySecurityId = SecuritySplit::query()
-                ->whereIn('security_id', $securityIds)
-                ->orderBy('effective_on')
-                ->get()
-                ->groupBy('security_id');
-        }
-
-        $transactions = $transactionModels
-            ->map(function (Transaction $transaction) use ($splitAdjustmentService, $splitsBySecurityId): PortfolioTransactionResponseData {
-
-                /** @var Collection<int, SecuritySplit> $splitsForSecurity */
-                $splitsForSecurity = $splitsBySecurityId->get($transaction->security_id, collect());
-                $splitAdjustedAmountData = $splitAdjustmentService->adjust($transaction, $splitsForSecurity);
-
-                return PortfolioTransactionResponseData::fromTransaction($transaction, $splitAdjustedAmountData);
-            });
-
-        return $apiResponse->make(
-            message: 'Portfolio transactions fetched successfully.',
-            status: Response::HTTP_OK,
-            data: new PortfolioTransactionsResponseData(
-                transactions: $transactions->all(),
-                portfolioName: $portfolio->name,
-            ),
-        );
+    /**
+     * @param  array<int, int>  $securityIds
+     * @return Collection<int, Collection<int, SecuritySplit>>
+     */
+    private function getSplitsBySecurityIds(array $securityIds): Collection
+    {
+        return SecuritySplit::query()
+            ->whereIn('security_id', $securityIds)
+            ->orderBy('effective_on')
+            ->get()
+            ->groupBy('security_id');
     }
 }
