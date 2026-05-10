@@ -62,9 +62,6 @@ executedAt: string,
 export type PortfolioTransactionsResponseData = {
 transactions: Array<any>,
 portfolioName: string | null,
-securityTicker: string | null,
-securityName: string | null,
-currencySymbol: string | null,
 };
 export type RegisterUserPayloadData = {
 name: string,

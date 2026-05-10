@@ -69,21 +69,6 @@ import { formatDecimal } from '@/format/number'
 import { formatDate, formatDateTime } from '@/format/date'
 import type { PortfolioTransactionResponseData, PortfolioTransactionsResponseData } from '@/types/generated'
 
-const securityTickerForPosition = (
-	response: PortfolioTransactionsResponseData | null,
-	fallbackRow: PortfolioTransactionResponseData | undefined,
-): string | null => response?.securityTicker ?? fallbackRow?.ticker ?? null
-
-const securityNameForPosition = (
-	response: PortfolioTransactionsResponseData | null,
-	fallbackRow: PortfolioTransactionResponseData | undefined,
-): string | null => response?.securityName ?? fallbackRow?.name ?? null
-
-const currencySymbolForPosition = (
-	response: PortfolioTransactionsResponseData | null,
-	fallbackRow: PortfolioTransactionResponseData | undefined,
-): string => response?.currencySymbol ?? fallbackRow?.currencySymbol ?? ''
-
 const route = useRoute()
 const transactions = ref<PortfolioTransactionResponseData[]>([])
 const transactionsResponse = ref<PortfolioTransactionsResponseData | null>(null)
@@ -101,15 +86,10 @@ const currencyId = computed(() => {
 
 	return Number.isNaN(parsedValue) ? null : parsedValue
 })
-const securityTicker = computed(() =>
-	securityTickerForPosition(transactionsResponse.value, transactions.value[0]),
-)
-const securityName = computed(() =>
-	securityNameForPosition(transactionsResponse.value, transactions.value[0]),
-)
-const currencySymbol = computed(() =>
-	currencySymbolForPosition(transactionsResponse.value, transactions.value[0]),
-)
+const firstTransaction = computed(() => transactions.value[0])
+const securityTicker = computed(() => firstTransaction.value?.ticker ?? null)
+const securityName = computed(() => firstTransaction.value?.name ?? null)
+const currencySymbol = computed(() => firstTransaction.value?.currencySymbol ?? '')
 const positionTitle = computed(() => {
 	const ticker = securityTicker.value ?? 'Position'
 	const name = securityName.value ? ` — ${securityName.value}` : ''

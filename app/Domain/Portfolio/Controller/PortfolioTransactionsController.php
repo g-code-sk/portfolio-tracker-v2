@@ -57,6 +57,7 @@ class PortfolioTransactionsController extends Controller
 
         $transactions = $transactionModels
             ->map(function (Transaction $transaction) use ($splitAdjustmentService, $splitsBySecurityId): PortfolioTransactionResponseData {
+
                 /** @var Collection<int, SecuritySplit> $splitsForSecurity */
                 $splitsForSecurity = $splitsBySecurityId->get($transaction->security_id, collect());
                 $splitAdjustedAmountData = $splitAdjustmentService->adjust($transaction, $splitsForSecurity);
@@ -64,17 +65,12 @@ class PortfolioTransactionsController extends Controller
                 return PortfolioTransactionResponseData::fromTransaction($transaction, $splitAdjustedAmountData);
             });
 
-        $metadataTransaction = $transactionModels->first();
-
         return $apiResponse->make(
             message: 'Portfolio transactions fetched successfully.',
             status: Response::HTTP_OK,
             data: new PortfolioTransactionsResponseData(
                 transactions: $transactions->all(),
                 portfolioName: $portfolio->name,
-                securityTicker: $metadataTransaction?->security->ticker,
-                securityName: $metadataTransaction?->security->name,
-                currencySymbol: $metadataTransaction?->currency->symbol,
             ),
         );
     }

@@ -46,9 +46,6 @@ export const fetchPositionTransactions = async (portfolioId: number, securityId:
 	return data.data ?? {
 		transactions: [],
 		portfolioName: null,
-		securityTicker: null,
-		securityName: null,
-		currencySymbol: null,
 	}
 }
 
