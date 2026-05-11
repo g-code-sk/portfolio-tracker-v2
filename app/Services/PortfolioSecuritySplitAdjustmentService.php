@@ -5,8 +5,6 @@ namespace App\Services;
 use App\Models\SecuritySplit;
 use App\Models\Transaction;
 use Carbon\CarbonImmutable;
-use Domain\Transaction\Data\SplitAdjustedBuySellTotals;
-use Domain\Transaction\Data\SplitAdjustedTransaction;
 use Domain\Transaction\Data\SplitAdjustedTransactionAmounts;
 use Illuminate\Support\Collection;
 
@@ -34,29 +32,6 @@ class PortfolioSecuritySplitAdjustmentService
         return new SplitAdjustedTransactionAmounts(
             numberOfShares: $adjustedShares,
             pricePerShare: $adjustedPrice,
-        );
-    }
-
-    /**
-     * @param  Collection<int, Transaction>  $transactions
-     * @param  Collection<int, SecuritySplit>  $splits
-     * @return Collection<int, SplitAdjustedTransaction>
-     */
-    public function collectSplitAdjustedTransactions(Collection $transactions, Collection $splits): Collection
-    {
-        return $transactions->map(function (Transaction $transaction) use ($splits): SplitAdjustedTransaction {
-            return SplitAdjustedTransaction::from($transaction, $this->adjust($transaction, $splits));
-        });
-    }
-
-    /**
-     * @param  Collection<int, Transaction>  $transactions
-     * @param  Collection<int, SecuritySplit>  $splits
-     */
-    public function summarizeBuySell(Collection $transactions, Collection $splits): SplitAdjustedBuySellTotals
-    {
-        return SplitAdjustedBuySellTotals::fromSplitAdjustedTransactions(
-            $this->collectSplitAdjustedTransactions($transactions, $splits)
         );
     }
 

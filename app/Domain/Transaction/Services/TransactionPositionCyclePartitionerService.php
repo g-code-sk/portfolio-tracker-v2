@@ -30,7 +30,7 @@ final class TransactionPositionCyclePartitionerService
      * @param  Collection<int, SplitAdjustedTransaction>  $splitAdjustedTransactionsAscending
      * @return list<Collection<int, SplitAdjustedTransaction>>
      */
-    public static function partition(Collection $splitAdjustedTransactionsAscending): array
+    public static function splitToCycles(Collection $splitAdjustedTransactionsAscending): array
     {
         $partitioner = new self;
 

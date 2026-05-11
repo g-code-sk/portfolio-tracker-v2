@@ -28,17 +28,25 @@ class SplitTransactionsAtWholeShareBoundariesAction
         $groups = [];
         $globalGroupIndex = 0;
 
-        $rows = $splitAdjustmentService->collectSplitAdjustedTransactions($transactionsAscending, $splitsForSecurity);
+        $splitAdjustedTransactions = $transactionsAscending
+            ->map(function (Transaction $transaction) use ($splitsForSecurity, $splitAdjustmentService): SplitAdjustedTransaction {
+                $splitAmounts = $splitAdjustmentService->adjust($transaction, $splitsForSecurity);
 
-        $cycles = TransactionPositionCyclePartitionerService::partition($rows);
+                return SplitAdjustedTransaction::from(
+                    $transaction,
+                    $splitAmounts,
+                );
+            });
+
+        $cycles = TransactionPositionCyclePartitionerService::splitToCycles($splitAdjustedTransactions);
 
         foreach ($cycles as $cycleRows) {
             $buyRows = $cycleRows
-                ->filter(fn (SplitAdjustedTransaction $row): bool => $row->transaction->type->code === TransactionTypeCode::Buy)
+                ->filter(fn (SplitAdjustedTransaction $splitAdjustedTransaction): bool => $splitAdjustedTransaction->transaction->type->code === TransactionTypeCode::Buy)
                 ->values();
 
             $sellRows = $cycleRows
-                ->filter(fn (SplitAdjustedTransaction $row): bool => $row->transaction->type->code === TransactionTypeCode::Sell)
+                ->filter(fn (SplitAdjustedTransaction $splitAdjustedTransaction): bool => $splitAdjustedTransaction->transaction->type->code === TransactionTypeCode::Sell)
                 ->values();
 
             $buyBuckets = WholeShareBucketPartitionerService::splitToBuckets($buyRows);

@@ -28,7 +28,6 @@ class PortfolioTransactionsController extends Controller
 
         $transactionModels = $this->getTransactions($portfolio, $queryData);
 
-        /** @var array<int, int> $securityIds */
         $securityIds = $transactionModels->pluck('security_id')->unique()->values()->all();
 
         if ($securityIds === []) {
@@ -51,8 +50,8 @@ class PortfolioTransactionsController extends Controller
             message: 'Portfolio transactions fetched successfully.',
             status: Response::HTTP_OK,
             data: new PortfolioTransactionsResponseData(
-                $transactions,
-                $portfolio->name,
+                transactions: $transactions,
+                portfolioName: $portfolio->name,
             ),
         );
     }

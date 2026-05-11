@@ -34,17 +34,17 @@ class PortfolioPositionResponseData extends Data
 
     /**
      * @param  Collection<int, Transaction>  $transactions
-     * @param  Collection<int, SecuritySplit>  $splits
+     * @param  Collection<int, SecuritySplit>  $splitsForSecurity
      */
     public static function fromTransactions(
         Collection $transactions,
-        Collection $splits,
+        Collection $splitsForSecurity,
         PortfolioSecuritySplitAdjustmentService $splitAdjustmentService,
     ): self {
-        $splitAdjustedTransactions = $transactions->map(function (Transaction $transaction) use ($splitAdjustmentService, $splits): SplitAdjustedTransaction {
+        $splitAdjustedTransactions = $transactions->map(function (Transaction $transaction) use ($splitAdjustmentService, $splitsForSecurity): SplitAdjustedTransaction {
             return SplitAdjustedTransaction::from(
                 $transaction,
-                $splitAdjustmentService->adjust($transaction, $splits),
+                $splitAdjustmentService->adjust($transaction, $splitsForSecurity),
             );
         });
 
